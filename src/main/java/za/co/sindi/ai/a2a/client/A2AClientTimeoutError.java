@@ -1,0 +1,27 @@
+/**
+ * 
+ */
+package za.co.sindi.ai.a2a.client;
+
+/**
+ * @author Buhake Sindi
+ * @since 03 November 2025
+ */
+public class A2AClientTimeoutError extends A2AClientError {
+
+	/**
+	 * @param message
+	 */
+	public A2AClientTimeoutError(String message) {
+		super(message);
+	}
+
+	/**
+	 * @param message
+	 * @param cause
+	 */
+	public A2AClientTimeoutError(String message, Throwable cause) {
+		super(message, cause);
+		// TODO Auto-generated constructor stub
+	}
+}
