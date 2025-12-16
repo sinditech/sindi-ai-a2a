@@ -26,7 +26,7 @@ public class PasswordOAuthFlow implements Serializable {
 	 * @param tokenUrl
 	 */
 	@JsonbCreator
-	public PasswordOAuthFlow(@JsonbProperty String refreshUrl, @JsonbProperty Map<String, String> scopes, @JsonbProperty String tokenUrl) {
+	public PasswordOAuthFlow(@JsonbProperty("refreshUrl") String refreshUrl, @JsonbProperty("scopes") Map<String, String> scopes, @JsonbProperty("tokenUrl") String tokenUrl) {
 		this(scopes, tokenUrl);
 		this.refreshUrl = refreshUrl;
 	}

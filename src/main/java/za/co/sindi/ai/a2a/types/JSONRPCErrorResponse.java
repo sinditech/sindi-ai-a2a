@@ -20,7 +20,7 @@ public final class JSONRPCErrorResponse extends JSONRPCResponse {
 	 * @param error
 	 */
 	@JsonbCreator
-	public JSONRPCErrorResponse(@JsonbProperty JSONRPCVersion jsonrpc, @JsonbProperty RequestId id, @JsonbProperty JSONRPCError error) {
+	public JSONRPCErrorResponse(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id, @JsonbProperty("error") JSONRPCError error) {
 		super(jsonrpc, id);
 		this.error = Objects.requireNonNull(error, "A JSON-RPC Error is required.");
 	}

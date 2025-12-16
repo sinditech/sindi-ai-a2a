@@ -23,7 +23,7 @@ public final class InvalidRequestError extends JSONRPCError implements A2AError 
 	 * @param data
 	 */
 	 @JsonbCreator
-	public InvalidRequestError(@JsonbProperty int code, @JsonbProperty String message, @JsonbProperty Map<String, Object> data) {
+	public InvalidRequestError(@JsonbProperty("code") int code, @JsonbProperty("message") String message, @JsonbProperty("data") Map<String, Object> data) {
 		super(code, message, data);
 		// TODO Auto-generated constructor stub
 	}

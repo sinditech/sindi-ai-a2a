@@ -21,7 +21,7 @@ public final class DeleteTaskPushNotificationConfigRequest extends JSONRPCReques
 	 * @param params
 	 */
 	@JsonbCreator
-	public DeleteTaskPushNotificationConfigRequest(@JsonbProperty JSONRPCVersion jsonrpc, @JsonbProperty RequestId id, @JsonbProperty String method, @JsonbProperty DeleteTaskPushNotificationConfigParams params) {
+	public DeleteTaskPushNotificationConfigRequest(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id, @JsonbProperty("method") String method, @JsonbProperty("params") DeleteTaskPushNotificationConfigParams params) {
 		super(jsonrpc, id, method, params);
 		// TODO Auto-generated constructor stub
 		if (!DEFAULT_METHOD.equals(method)) throw new IllegalArgumentException("Invalid " + this.getClass().getSimpleName() + " method.");

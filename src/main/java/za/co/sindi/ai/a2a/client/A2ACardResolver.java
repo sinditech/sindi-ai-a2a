@@ -79,14 +79,14 @@ public class A2ACardResolver {
 						                .GET();
 		
 		@SuppressWarnings("unchecked")
-		Map<String, String> httpHeaders = (Map<String, String>) httpKeywordArguments.get("headers");
+		Map<String, String> httpHeaders = httpKeywordArguments != null ? (Map<String, String>) httpKeywordArguments.get("headers") : null;
 		if (httpHeaders != null) {
 			for (Entry<String, String> header : httpHeaders.entrySet()) {
 				httpRequestBuilder.header(header.getKey(), header.getValue());
 			}
 		}
 		
-		if (httpKeywordArguments.containsKey("timeout")) {
+		if (httpKeywordArguments != null && httpKeywordArguments.containsKey("timeout")) {
 			httpRequestBuilder.timeout((Duration) httpKeywordArguments.get("timeout"));
 		}
 		

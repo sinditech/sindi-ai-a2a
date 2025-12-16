@@ -2,6 +2,8 @@ package za.co.sindi.ai.a2a.types;
 
 import java.util.Objects;
 
+import jakarta.json.bind.annotation.JsonbTransient;
+
 /**
  * @author Buhake Sindi
  * @since 08 February 2025
@@ -10,7 +12,8 @@ public non-sealed abstract class JSONRPCRequest<T> implements JSONRPCMessage {
 	
 	private JSONRPCVersion jsonrpc;
 	private RequestId id;
-	private String method;
+	@JsonbTransient
+	private String requestMethod; //Renamed from "method" to "requestMethod" because of JSON-B serialization.
 //	private Map<String, Object> params;
 	private T params;
 
@@ -24,7 +27,7 @@ public non-sealed abstract class JSONRPCRequest<T> implements JSONRPCMessage {
 //		if (this.jsonrpc != JSONRPCVersion.VERSION_2_0) {
 //			throw new IllegalArgumentException("Invalid JSON-RPC protocol version");
 //		}
-		this.method = Objects.requireNonNull(method, "A JSON-RPC method is required.");
+		this.requestMethod = Objects.requireNonNull(method, "A JSON-RPC method is required.");
 	}
 
 	/**
@@ -79,7 +82,7 @@ public non-sealed abstract class JSONRPCRequest<T> implements JSONRPCMessage {
 	/**
 	 * @return the method
 	 */
-	public String getMethod() {
-		return method;
+	public String getRequestMethod() {
+		return requestMethod;
 	}	
 }

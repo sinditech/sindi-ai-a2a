@@ -31,7 +31,7 @@ public final class FileWithUri extends FileBase {
 	 * @param mimeTye
 	 */
 	@JsonbCreator
-	public FileWithUri(@JsonbProperty String uri, @JsonbProperty String name, @JsonbProperty String mimeTye) {
+	public FileWithUri(@JsonbProperty("uri") String uri, @JsonbProperty("name") String name, @JsonbProperty("mimeType") String mimeTye) {
 		this(uri);
 		setName(name);
 		setMimeType(mimeTye);

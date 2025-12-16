@@ -25,7 +25,7 @@ public final class OAuth2SecurityScheme extends SecurityScheme {
 	 * @param oauth2MetadataUrl
 	 */
 	@JsonbCreator
-	public OAuth2SecurityScheme(@JsonbProperty String description, @JsonbProperty OAuthFlows flows, @JsonbProperty String oauth2MetadataUrl) {
+	public OAuth2SecurityScheme(@JsonbProperty("description") String description, @JsonbProperty("flows") OAuthFlows flows, @JsonbProperty("oauth2MetadataUrl") String oauth2MetadataUrl) {
 		this(flows);
 		setDescription(description);
 		this.oauth2MetadataUrl = oauth2MetadataUrl;

@@ -26,7 +26,7 @@ public class AgentCardSignature implements Serializable {
 	 * @param header
 	 */
 	@JsonbCreator
-	public AgentCardSignature(@JsonbProperty("protected") String protectedHeader, @JsonbProperty String signature, @JsonbProperty Map<String, Object> header) {
+	public AgentCardSignature(@JsonbProperty("protected") String protectedHeader, @JsonbProperty("signature") String signature, @JsonbProperty("header") Map<String, Object> header) {
 		this(protectedHeader, signature);
 		this.header = header;
 	}

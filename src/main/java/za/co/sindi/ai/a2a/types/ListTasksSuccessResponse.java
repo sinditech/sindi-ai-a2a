@@ -18,7 +18,7 @@ public final class ListTasksSuccessResponse extends JSONRPCResultResponse<ListTa
 	 * @param result
 	 */
 	@JsonbCreator
-	public ListTasksSuccessResponse(@JsonbProperty JSONRPCVersion jsonrpc, @JsonbProperty RequestId id, @JsonbProperty ListTasksResult result) {
+	public ListTasksSuccessResponse(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id, @JsonbProperty("result") ListTasksResult result) {
 		super(jsonrpc, id, result);
 	}
 
@@ -30,5 +30,4 @@ public final class ListTasksSuccessResponse extends JSONRPCResultResponse<ListTa
 	public ListTasksSuccessResponse(RequestId id, ListTasksResult result) {
 		this(JSONRPCVersion.getLatest(), id, result);
 	}
-
 }

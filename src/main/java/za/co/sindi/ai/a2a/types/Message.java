@@ -49,8 +49,8 @@ public final class Message implements Kind, StreamingKind, Event {
 	 * @param contextId
 	 */
 	@JsonbCreator
-	public Message(@JsonbProperty Role role, @JsonbProperty Part[] parts, @JsonbProperty Map<String, Object> metadata, @JsonbProperty String[] extensions,
-			@JsonbProperty String[] referenceTaskIds, @JsonbProperty String messageId, @JsonbProperty String taskId, String contextId) {
+	public Message(@JsonbProperty("role") Role role, @JsonbProperty("parts") Part[] parts, @JsonbProperty("metadata") Map<String, Object> metadata, @JsonbProperty("extensions") String[] extensions,
+			@JsonbProperty("referenceTaskIds") String[] referenceTaskIds, @JsonbProperty("messageId") String messageId, @JsonbProperty("taskId") String taskId, @JsonbProperty("contextId") String contextId) {
 		this(role, parts, messageId);
 //		this.role = role;
 //		this.parts = parts;
@@ -180,5 +180,4 @@ public final class Message implements Kind, StreamingKind, Event {
 			throw new IllegalArgumentException("Invalid role value '" + value + "'.");
 		}
 	}
-
 }

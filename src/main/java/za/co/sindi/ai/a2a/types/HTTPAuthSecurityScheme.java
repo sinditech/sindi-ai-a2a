@@ -25,7 +25,7 @@ public final class HTTPAuthSecurityScheme extends SecurityScheme {
 	 * @param scheme
 	 */
 	@JsonbCreator
-	public HTTPAuthSecurityScheme(@JsonbProperty String bearerFormat, @JsonbProperty String description, @JsonbProperty String scheme) {
+	public HTTPAuthSecurityScheme(@JsonbProperty("bearerFormat") String bearerFormat, @JsonbProperty("description") String description, @JsonbProperty("scheme") String scheme) {
 		super();
 		this.bearerFormat = bearerFormat;
 		setDescription(description);

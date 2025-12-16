@@ -18,7 +18,7 @@ public final class ListTaskPushNotificationConfigSuccessResponse extends JSONRPC
 	 * @param result
 	 */
 	@JsonbCreator
-	public ListTaskPushNotificationConfigSuccessResponse(@JsonbProperty JSONRPCVersion jsonrpc, @JsonbProperty RequestId id, @JsonbProperty TaskPushNotificationConfig[] result) {
+	public ListTaskPushNotificationConfigSuccessResponse(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id, @JsonbProperty("result") TaskPushNotificationConfig[] result) {
 		super(jsonrpc, id, result);
 	}
 
@@ -30,5 +30,4 @@ public final class ListTaskPushNotificationConfigSuccessResponse extends JSONRPC
 	public ListTaskPushNotificationConfigSuccessResponse(RequestId id, TaskPushNotificationConfig[] result) {
 		this(JSONRPCVersion.getLatest(), id, result);
 	}
-
 }

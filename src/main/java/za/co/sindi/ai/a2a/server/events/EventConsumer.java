@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 
 import za.co.sindi.ai.a2a.server.A2AServerError;
 import za.co.sindi.ai.a2a.server.events.EventQueue.QueueClosedException;
+import za.co.sindi.ai.a2a.server.events.EventQueue.QueueEmptyException;
 import za.co.sindi.ai.a2a.types.Event;
 import za.co.sindi.ai.a2a.types.Message;
 import za.co.sindi.ai.a2a.types.Task;
@@ -58,12 +59,19 @@ public class EventConsumer {
 		LOGGER.fine("Attempting to consume one event.");
 		try {
 			Event event = queue.dequeueEvent(true);
-			LOGGER.info(String.format("Dequeued event of type: %s in consume_one.", event.getClass().getSimpleName()));
+			LOGGER.info(String.format("Dequeued event of type: %s in consumeOne().", event.getClass().getSimpleName()));
 			queue.taskDone();
 			
 			return event;
-		} catch (InterruptedException | QueueClosedException e) {
+		} catch (InterruptedException | QueueClosedException | QueueEmptyException e) {
 			// TODO Auto-generated catch block
+			if (e instanceof QueueClosedException) {
+				LOGGER.warning("Event queue is closed in consumeOne().");
+			} else if (e instanceof QueueEmptyException) {
+				LOGGER.warning("Event queue was empty in consumeOne().");
+			} else {
+				LOGGER.warning("Event queue threw and interrupted exception in consumeOne().");
+			}
 			throw new A2AServerError(new za.co.sindi.ai.a2a.types.InternalError("Agent did not return any response."));
 		}
 	}
@@ -158,16 +166,18 @@ public class EventConsumer {
                     subscriber.onComplete();
                     break;
                 }
-            } catch (InterruptedException e) {
-            	LOGGER.severe("Stopping event consumption due to exception");
-                exception = e;
-                continue;
-            } catch (QueueClosedException e) {
-                if (queue.isClosed()) {
+            } catch (IllegalStateException | InterruptedException e) {
+            	continue;
+            } catch (QueueClosedException | QueueEmptyException e) {
+                if (queue.isClosed() || queue.isEmpty()) {
                 	subscriber.onComplete();
                 	break;
                 }
-            }
+            } catch (Exception e) {
+	        	LOGGER.severe("Stopping event consumption due to an exception.");
+	            exception = e;
+	            continue;
+	        } 
         }
 	}
 }

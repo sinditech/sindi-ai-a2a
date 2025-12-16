@@ -14,6 +14,7 @@ import za.co.sindi.ai.a2a.client.middleware.ClientCallInterceptor;
 import za.co.sindi.ai.a2a.types.AgentCard;
 import za.co.sindi.ai.a2a.types.GetTaskPushNotificationConfigParams;
 import za.co.sindi.ai.a2a.types.Message;
+import za.co.sindi.ai.a2a.types.MessageSendConfiguration;
 import za.co.sindi.ai.a2a.types.Task;
 import za.co.sindi.ai.a2a.types.TaskIdParams;
 import za.co.sindi.ai.a2a.types.TaskPushNotificationConfig;
@@ -51,6 +52,21 @@ public abstract class Client implements AutoCloseable {
 	 * configured {@link Consumer}'s in the client.
         
 	 * @param request The message to send to the agent.
+	 */
+	public void sendMessage(final Message request) {
+		sendMessage(request, null);
+	}
+	
+	/**
+	 * Sends a message to the server.
+	 * 
+	 * This will automatically use the streaming or non-streaming approach
+	 * as supported by the server and the client config. Client will
+	 * aggregate update events and return an iterator of ({@link Task}, {@link UpdateEvent})
+	 * pairs, or a `Message`. Client will also send these values to any
+	 * configured {@link Consumer}'s in the client.
+        
+	 * @param request The message to send to the agent.
 	 * @param context The client call context.
 	 */
 	public void sendMessage(final Message request, final ClientCallContext context) {
@@ -70,7 +86,44 @@ public abstract class Client implements AutoCloseable {
 	 * @param context The client call context.
 	 * @param requestMetadata Extensions Metadata attached to the request.
 	 */
-	public abstract void sendMessage(final Message request, final ClientCallContext context, final Map<String, Object> requestMetadata);
+	public void sendMessage(final Message request, final ClientCallContext context, final Map<String, Object> requestMetadata) {
+		sendMessage(request, context, requestMetadata, null);
+	}
+	
+	/**
+	 * Sends a message to the server.
+	 * 
+	 * This will automatically use the streaming or non-streaming approach
+	 * as supported by the server and the client config. Client will
+	 * aggregate update events and return an iterator of ({@link Task}, {@link UpdateEvent})
+	 * pairs, or a `Message`. Client will also send these values to any
+	 * configured {@link Consumer}'s in the client.
+	 * 
+	 * @param request The message to send to the agent.
+	 * @param context The client call context.
+	 * @param requestMetadata Extensions Metadata attached to the request.
+	 * @param extensions List of extensions to be activated.
+	 */
+	public void sendMessage(final Message request, final ClientCallContext context, final Map<String, Object> requestMetadata, List<String> extensions) {
+		sendMessage(request, context, null, requestMetadata, extensions);
+	}
+	
+	/**
+	 * Sends a message to the server.
+	 * 
+	 * This will automatically use the streaming or non-streaming approach
+	 * as supported by the server and the client config. Client will
+	 * aggregate update events and return an iterator of ({@link Task}, {@link UpdateEvent})
+	 * pairs, or a `Message`. Client will also send these values to any
+	 * configured {@link Consumer}'s in the client.
+	 * 
+	 * @param request The message to send to the agent.
+	 * @param context The client call context.
+	 * @param configuration Optional per-call overrides for message sending behavior.
+	 * @param requestMetadata Extensions Metadata attached to the request.
+	 * @param extensions List of extensions to be activated.
+	 */
+	public abstract void sendMessage(Message request, ClientCallContext context, final MessageSendConfiguration configuration, Map<String, Object> requestMetadata, final List<String> extensions);
 	
 	/**
 	 * Retrieves the current state and history of a specific task.
@@ -89,7 +142,19 @@ public abstract class Client implements AutoCloseable {
 	 * @param context
 	 * @return
 	 */
-	public abstract Task getTask(final TaskQueryParams request, final ClientCallContext context);
+	public Task getTask(final TaskQueryParams request, final ClientCallContext context) {
+		return getTask(request, context, null);
+	}
+	
+	/**
+	 * Retrieves the current state and history of a specific task.
+	 * 
+	 * @param request
+	 * @param context
+	 * @param extensions
+	 * @return
+	 */
+	public abstract Task getTask(final TaskQueryParams request, final ClientCallContext context, final List<String> extensions);
 	
 	/**
 	 * Requests the agent to cancel a specific task.
@@ -108,7 +173,19 @@ public abstract class Client implements AutoCloseable {
 	 * @param context
 	 * @return
 	 */
-	public abstract Task cancelTask(final TaskIdParams request, final ClientCallContext context);
+	public Task cancelTask(final TaskIdParams request, final ClientCallContext context) {
+		return cancelTask(request, context, null);
+	}
+	
+	/**
+	 * Requests the agent to cancel a specific task.
+	 * 
+	 * @param request
+	 * @param context
+	 * @param extensions
+	 * @return
+	 */
+	public abstract Task cancelTask(final TaskIdParams request, final ClientCallContext context, final List<String> extensions);
 	
 	/**
 	 * Sets or updates the push notification configuration for a specific task.
@@ -127,7 +204,19 @@ public abstract class Client implements AutoCloseable {
 	 * @param context
 	 * @return
 	 */
-	public abstract TaskPushNotificationConfig setTaskCallback(final TaskPushNotificationConfig request, final ClientCallContext context);
+	public TaskPushNotificationConfig setTaskCallback(final TaskPushNotificationConfig request, final ClientCallContext context) {
+		return setTaskCallback(request, context, null);
+	}
+	
+	/**
+	 * Sets or updates the push notification configuration for a specific task.
+	 * 
+	 * @param request
+	 * @param context
+	 * @param extensions
+	 * @return
+	 */
+	public abstract TaskPushNotificationConfig setTaskCallback(final TaskPushNotificationConfig request, final ClientCallContext context, final List<String> extensions);
 	
 	/**
 	 * Retrieves the push notification configuration for a specific task.
@@ -146,7 +235,18 @@ public abstract class Client implements AutoCloseable {
 	 * @param context
 	 * @return
 	 */
-	public abstract TaskPushNotificationConfig getTaskCallback(final GetTaskPushNotificationConfigParams request, final ClientCallContext context);
+	public TaskPushNotificationConfig getTaskCallback(final GetTaskPushNotificationConfigParams request, final ClientCallContext context) {
+		return getTaskCallback(request, context, null);
+	}
+	
+	/**
+	 * Retrieves the push notification configuration for a specific task.
+	 * 
+	 * @param request
+	 * @param context
+	 * @return
+	 */
+	public abstract TaskPushNotificationConfig getTaskCallback(final GetTaskPushNotificationConfigParams request, final ClientCallContext context, final List<String> extensions);
 	
 	/**
 	 * Resubscribes to a task's event stream.
@@ -154,7 +254,17 @@ public abstract class Client implements AutoCloseable {
 	 * @param request
 	 * @param context
 	 */
-	public abstract void resusbcribe(final TaskIdParams request, final ClientCallContext context);
+	public void resusbcribe(final TaskIdParams request, final ClientCallContext context) {
+		resusbcribe(request, context, null);
+	}
+	
+	/**
+	 * Resubscribes to a task's event stream.
+	 *         
+	 * @param request
+	 * @param context
+	 */
+	public abstract void resusbcribe(final TaskIdParams request, final ClientCallContext context, final List<String> extensions);
 	
 	/**
 	 * Retrieves the agent's card.
@@ -171,7 +281,17 @@ public abstract class Client implements AutoCloseable {
 	 * @param context
 	 * @return
 	 */
-	public abstract AgentCard getAgentCard(final ClientCallContext context);
+	public AgentCard getAgentCard(final ClientCallContext context) {
+		return getAgentCard(context, null);
+	}
+	
+	/**
+	 * Retrieves the agent's card.
+	 * 
+	 * @param context
+	 * @return
+	 */
+	public abstract AgentCard getAgentCard(final ClientCallContext context, final List<String> extensions);
 	
 	/**
 	 * Attaches additional consumers to the {@link Client}.

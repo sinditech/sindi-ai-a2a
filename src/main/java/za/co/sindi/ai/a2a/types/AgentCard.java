@@ -56,12 +56,12 @@ public class AgentCard implements Serializable {
 	 * @param signatures
 	 */
 	@JsonbCreator
-	public AgentCard(@JsonbProperty String protocolVersion, @JsonbProperty String name, @JsonbProperty String description, @JsonbProperty String url,
-			@JsonbProperty TransportProtocol preferredTransport, @JsonbProperty AgentInterface[] additionalInterfaces, @JsonbProperty String iconUrl,
-			@JsonbProperty AgentProvider provider, @JsonbProperty String version, @JsonbProperty String documentUrl, @JsonbProperty AgentCapabilities capabilities,
-			@JsonbProperty Map<String, ? extends SecurityScheme> securitySchemes, @JsonbProperty Map<String, String[]>[] security,
-			@JsonbProperty String[] defaultInputModes, @JsonbProperty String[] defaultOutputModes, @JsonbProperty AgentSkill[] skills,
-			@JsonbProperty Boolean supportsAuthenticatedExtendedCard, @JsonbProperty AgentCardSignature[] signatures) {
+	public AgentCard(@JsonbProperty("protocolVersion") String protocolVersion, @JsonbProperty("name") String name, @JsonbProperty("description") String description, @JsonbProperty("url") String url,
+			@JsonbProperty("preferredTransport") TransportProtocol preferredTransport, @JsonbProperty("additionalInterfaces") AgentInterface[] additionalInterfaces, @JsonbProperty("iconUrl") String iconUrl,
+			@JsonbProperty("provider") AgentProvider provider, @JsonbProperty("version") String version, @JsonbProperty("documentUrl") String documentUrl, @JsonbProperty("capabilities") AgentCapabilities capabilities,
+			@JsonbProperty("securitySchemes") Map<String, ? extends SecurityScheme> securitySchemes, @JsonbProperty("security") Map<String, String[]>[] security,
+			@JsonbProperty("defaultInputModes") String[] defaultInputModes, @JsonbProperty("defaultOutputModes") String[] defaultOutputModes, @JsonbProperty("skills") AgentSkill[] skills,
+			@JsonbProperty("supportsAuthenticatedExtendedCard") Boolean supportsAuthenticatedExtendedCard, @JsonbProperty("signatures") AgentCardSignature[] signatures) {
 		this(protocolVersion, name, description, url, version, capabilities, defaultInputModes, defaultOutputModes, skills);
 		this.preferredTransport = preferredTransport;
 		this.additionalInterfaces = additionalInterfaces;

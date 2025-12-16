@@ -21,7 +21,7 @@ public final class GetTaskRequest extends JSONRPCRequest<TaskQueryParams> implem
 	 * @param params
 	 */
 	@JsonbCreator
-	public GetTaskRequest(@JsonbProperty JSONRPCVersion jsonrpc, @JsonbProperty RequestId id, @JsonbProperty String method, @JsonbProperty TaskQueryParams params) {
+	public GetTaskRequest(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id, @JsonbProperty("method") String method, @JsonbProperty("params") TaskQueryParams params) {
 		super(jsonrpc, id, method, params);
 		// TODO Auto-generated constructor stub
 		if (!DEFAULT_METHOD.equals(method)) throw new IllegalArgumentException("Invalid " + this.getClass().getSimpleName() + " method.");

@@ -18,7 +18,7 @@ public final class GetAuthenticatedExtendedCardSuccessResponse extends JSONRPCRe
 	 * @param result
 	 */
 	@JsonbCreator
-	public GetAuthenticatedExtendedCardSuccessResponse(@JsonbProperty JSONRPCVersion jsonrpc, @JsonbProperty RequestId id, @JsonbProperty AgentCard result) {
+	public GetAuthenticatedExtendedCardSuccessResponse(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id, @JsonbProperty("result") AgentCard result) {
 		super(jsonrpc, id, result);
 	}
 
@@ -30,5 +30,4 @@ public final class GetAuthenticatedExtendedCardSuccessResponse extends JSONRPCRe
 	public GetAuthenticatedExtendedCardSuccessResponse(RequestId id, AgentCard result) {
 		this(JSONRPCVersion.getLatest(), id, result);
 	}
-
 }

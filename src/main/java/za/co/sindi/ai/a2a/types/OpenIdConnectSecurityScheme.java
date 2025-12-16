@@ -21,7 +21,7 @@ public final class OpenIdConnectSecurityScheme extends SecurityScheme {
 	 * @param openIdConnectUrl
 	 */
 	@JsonbCreator
-	public OpenIdConnectSecurityScheme(@JsonbProperty String description, @JsonbProperty String openIdConnectUrl) {
+	public OpenIdConnectSecurityScheme(@JsonbProperty("description") String description, @JsonbProperty("openIdConnectUrl") String openIdConnectUrl) {
 		this(openIdConnectUrl);
 		setDescription(description);
 	}

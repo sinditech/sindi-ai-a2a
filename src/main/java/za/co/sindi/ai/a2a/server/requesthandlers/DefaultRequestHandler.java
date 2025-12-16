@@ -324,8 +324,9 @@ public class DefaultRequestHandler implements RequestHandler {
 			if (TERMINAL_TASK_STATES.contains(task.getStatus().state())) {
 				throw new A2AServerError(new InvalidParamsError("Task " + task.getId() + " is in terminal state: " + task.getStatus().state()));
 			}
+			task = taskManager.updateWithMessage(params.message(), task);
 		} else if (params.message().getTaskId() != null) {
-			throw new A2AServerError(new TaskNotFoundError("Task " + params.message().getTaskId() + " was specified but does not exist"));
+			throw new A2AServerError(new TaskNotFoundError("Task " + params.message().getTaskId() + " was specified but does not exist."));
 		}
 		
 		RequestContext requestContext = requestContextBuilder.params(params)

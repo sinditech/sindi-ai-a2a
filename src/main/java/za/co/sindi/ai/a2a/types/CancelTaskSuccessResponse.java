@@ -18,7 +18,7 @@ public final class CancelTaskSuccessResponse extends JSONRPCResultResponse<Task>
 	 * @param result
 	 */
 	@JsonbCreator
-	public CancelTaskSuccessResponse(@JsonbProperty JSONRPCVersion jsonrpc, @JsonbProperty RequestId id, @JsonbProperty Task result) {
+	public CancelTaskSuccessResponse(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id, @JsonbProperty("result") Task result) {
 		super(jsonrpc, id, result);
 	}
 
@@ -30,5 +30,4 @@ public final class CancelTaskSuccessResponse extends JSONRPCResultResponse<Task>
 	public CancelTaskSuccessResponse(RequestId id, Task result) {
 		this(JSONRPCVersion.getLatest(), id, result);
 	}
-
 }

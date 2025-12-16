@@ -7,13 +7,14 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 
+import jakarta.json.bind.annotation.JsonbCreator;
 import jakarta.json.bind.annotation.JsonbProperty;
 
 /**
  * @author Buhake Sindi
  * @since 22 October 2025
  */
-public record TaskQueryParams(@JsonbProperty Integer historyLength, @JsonbProperty String id, @JsonbProperty Map<String, Object> metadata) implements Serializable {
+public record TaskQueryParams(Integer historyLength, String id, Map<String, Object> metadata) implements Serializable {
 
 	public TaskQueryParams {
 		id = Objects.requireNonNull(id, "A unique ID is required.");
@@ -22,5 +23,10 @@ public record TaskQueryParams(@JsonbProperty Integer historyLength, @JsonbProper
 	
 	public TaskQueryParams(String id) {
 		this(null, id, null);
+	}
+	
+	@JsonbCreator
+	public static TaskQueryParams create(@JsonbProperty("historyLength") Integer historyLength, @JsonbProperty("id") String id, @JsonbProperty("metadata") Map<String, Object> metadata) {
+		return new TaskQueryParams(historyLength, id, metadata);
 	}
 }

@@ -23,7 +23,7 @@ public final class AuthenticatedExtendedCardNotConfiguredError extends JSONRPCEr
 	 * @param data
 	 */
 	 @JsonbCreator
-	public AuthenticatedExtendedCardNotConfiguredError(@JsonbProperty int code, @JsonbProperty String message, @JsonbProperty Map<String, Object> data) {
+	public AuthenticatedExtendedCardNotConfiguredError(@JsonbProperty("code") int code, @JsonbProperty("message") String message, @JsonbProperty("data") Map<String, Object> data) {
 		super(code, message, data);
 		// TODO Auto-generated constructor stub
 	}

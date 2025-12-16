@@ -23,7 +23,7 @@ public final class APIKeySecurityScheme extends SecurityScheme {
 	 * @param name
 	 */
 	@JsonbCreator
-	public APIKeySecurityScheme(@JsonbProperty String description, @JsonbProperty In in, @JsonbProperty String name) {
+	public APIKeySecurityScheme(@JsonbProperty("description") String description, @JsonbProperty("in") In in, @JsonbProperty("name") String name) {
 		super();
 		setDescription(description);
 		this.in = in;

@@ -33,8 +33,8 @@ public final class TaskArtifactUpdateEvent implements StreamingKind, UpdateEvent
 	 * @param metadata
 	 */
 	@JsonbCreator
-	public TaskArtifactUpdateEvent(@JsonbProperty String taskId, @JsonbProperty String contextId, @JsonbProperty Artifact artifact, @JsonbProperty Boolean append,
-			@JsonbProperty Boolean lastChunk, @JsonbProperty Map<String, Object> metadata) {
+	public TaskArtifactUpdateEvent(@JsonbProperty("taskId") String taskId, @JsonbProperty("contextId") String contextId, @JsonbProperty("artifact") Artifact artifact, @JsonbProperty("append") Boolean append,
+			@JsonbProperty("lastChunk") Boolean lastChunk, @JsonbProperty("metadata") Map<String, Object> metadata) {
 		super();
 		this.taskId = taskId;
 		this.contextId = contextId;

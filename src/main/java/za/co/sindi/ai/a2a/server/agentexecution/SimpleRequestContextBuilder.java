@@ -52,6 +52,7 @@ public class SimpleRequestContextBuilder extends RequestContextBuilder {
             }
 		}
 		
-		return super.relatedTasks(relatedTasks).build();
+		relatedTasks(relatedTasks);
+		return super.build();
 	}
 }

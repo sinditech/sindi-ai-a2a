@@ -18,7 +18,7 @@ public final class SendStreamingMessageSuccessResponse extends JSONRPCResultResp
 	 * @param result
 	 */
 	@JsonbCreator
-	public SendStreamingMessageSuccessResponse(@JsonbProperty JSONRPCVersion jsonrpc, @JsonbProperty RequestId id, @JsonbProperty StreamingKind result) {
+	public SendStreamingMessageSuccessResponse(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id, @JsonbProperty("result") StreamingKind result) {
 		super(jsonrpc, id, result);
 	}
 

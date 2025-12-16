@@ -31,7 +31,7 @@ public final class FileWithBytes extends FileBase {
 	 * @param mimeTye
 	 */
 	@JsonbCreator
-	public FileWithBytes(@JsonbProperty String bytes, @JsonbProperty String name, @JsonbProperty String mimeTye) {
+	public FileWithBytes(@JsonbProperty("bytes") String bytes, @JsonbProperty("name") String name, @JsonbProperty("mimeType") String mimeTye) {
 		this(bytes);
 		setName(name);
 		setMimeType(mimeTye);

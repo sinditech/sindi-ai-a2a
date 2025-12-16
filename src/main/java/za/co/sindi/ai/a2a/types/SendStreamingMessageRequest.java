@@ -21,7 +21,7 @@ public final class SendStreamingMessageRequest extends JSONRPCRequest<MessageSen
 	 * @param params
 	 */
 	@JsonbCreator
-	public SendStreamingMessageRequest(@JsonbProperty JSONRPCVersion jsonrpc, @JsonbProperty RequestId id, @JsonbProperty String method, @JsonbProperty MessageSendParams params) {
+	public SendStreamingMessageRequest(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id, @JsonbProperty("method") String method, @JsonbProperty("params") MessageSendParams params) {
 		super(jsonrpc, id, method, params);
 		// TODO Auto-generated constructor stub
 		if (!DEFAULT_METHOD.equals(method)) throw new IllegalArgumentException("Invalid " + this.getClass().getSimpleName() + " method.");

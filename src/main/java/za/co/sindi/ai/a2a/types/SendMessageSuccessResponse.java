@@ -18,7 +18,7 @@ public final class SendMessageSuccessResponse extends JSONRPCResultResponse<Kind
 	 * @param result
 	 */
 	@JsonbCreator
-	public SendMessageSuccessResponse(@JsonbProperty JSONRPCVersion jsonrpc, @JsonbProperty RequestId id, @JsonbProperty Kind result) {
+	public SendMessageSuccessResponse(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id, @JsonbProperty("result") Kind result) {
 		super(jsonrpc, id, result);
 	}
 

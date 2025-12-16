@@ -28,7 +28,7 @@ public class AuthorizationCodeOAuthFlow implements Serializable {
 	 * @param tokenUrl
 	 */
 	@JsonbCreator
-	public AuthorizationCodeOAuthFlow(@JsonbProperty String authorizationUrl, @JsonbProperty String refreshUrl, @JsonbProperty Map<String, String> scopes, @JsonbProperty String tokenUrl) {
+	public AuthorizationCodeOAuthFlow(@JsonbProperty("authorizationUrl") String authorizationUrl, @JsonbProperty("refreshUrl") String refreshUrl, @JsonbProperty("scopes") Map<String, String> scopes, @JsonbProperty("tokenUrl") String tokenUrl) {
 		this(authorizationUrl, tokenUrl, scopes);
 		this.refreshUrl = refreshUrl;
 	}

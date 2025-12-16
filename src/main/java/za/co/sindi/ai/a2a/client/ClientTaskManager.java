@@ -171,14 +171,15 @@ public class ClientTaskManager {
 	 * @return The updated {@link Task} object (updated in-place).
 	 */
 	public Task updateWithMessage(final Message message, final Task task) {
-		List<Message> history = task.getHistory() == null ? new ArrayList<>() : new ArrayList<>(List.of(task.getHistory()));
+		Task.Builder taskBuilder = new Task.Builder(task);
+		List<Message> history = task.getHistory() != null && task.getHistory().length > 0 ? new ArrayList<>(List.of(task.getHistory())) : new ArrayList<>();
 		if (task.getStatus().message() != null) {
 			history.add(task.getStatus().message());
+			taskBuilder.status(TaskStatus.create(task.getStatus().state(), null, task.getStatus().timestamp()));
 		}
 		
 		history.add(message);
-		currentTask = task;
-		return task;
+		return (currentTask = taskBuilder.history(history).build());
 	}
 	
 	/**

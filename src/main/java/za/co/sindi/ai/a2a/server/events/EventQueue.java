@@ -40,6 +40,15 @@ public class EventQueue implements AutoCloseable {
             super(message);
         }
     }
+    
+    /**
+     * Exception thrown when attempting to dequeue from an empty queue.
+     */
+    public static class QueueEmptyException extends Exception {
+        public QueueEmptyException(String message) {
+            super(message);
+        }
+    }
 
     /**
      * Initializes the EventQueue with default max queue size.
@@ -98,9 +107,10 @@ public class EventQueue implements AutoCloseable {
      *
      * @return The next event from the queue
      * @throws InterruptedException if interrupted while waiting
-     * @throws QueueClosedException if the queue is closed and empty
+     * @throws QueueClosedException if the queue is closed
+     * @throws QueueEmptyException if the queue is empty
      */
-    public Event dequeueEvent() throws InterruptedException, QueueClosedException {
+    public Event dequeueEvent() throws InterruptedException, QueueClosedException, QueueEmptyException {
         return dequeueEvent(false);
     }
 
@@ -112,14 +122,20 @@ public class EventQueue implements AutoCloseable {
      * @return The next event from the queue
      * @throws InterruptedException if interrupted while waiting
      * @throws IllegalStateException if noWait is true and the queue is empty
-     * @throws QueueClosedException if the queue is closed and empty
+     * @throws QueueClosedException if the queue is closed
+     * @throws QueueEmptyException if the queue is empty
      */
-    public Event dequeueEvent(boolean noWait) throws InterruptedException, QueueClosedException {
+    public Event dequeueEvent(boolean noWait) throws InterruptedException, QueueClosedException, QueueEmptyException {
         lock.lock();
         try {
-            if (isClosed && queue.isEmpty()) {
+            if (isClosed) {
                 LOGGER.warning("Queue is closed. Event will not be dequeued.");
                 throw new QueueClosedException("Queue is closed.");
+            }
+            
+            if (queue.isEmpty()) {
+            	LOGGER.warning("Queue is empty. Event will not be dequeued.");
+            	throw new QueueEmptyException("Queue is empty.");
             }
         } finally {
             lock.unlock();
@@ -128,9 +144,6 @@ public class EventQueue implements AutoCloseable {
         if (noWait) {
             LOGGER.fine("Attempting to dequeue event (no_wait=true).");
             Event event = queue.poll();
-            if (event == null) {
-                throw new IllegalStateException("Queue is empty");
-            }
             LOGGER.fine("Dequeued event (no_wait=true) of type: " + event.getClass().getSimpleName());
             return event;
         }
@@ -151,14 +164,20 @@ public class EventQueue implements AutoCloseable {
      * @return The next event from the queue
      * @throws InterruptedException if interrupted while waiting
      * @throws IllegalStateException if noWait is true and the queue is empty
-     * @throws QueueClosedException if the queue is closed and empty
+     * @throws QueueClosedException if the queue is closed
+     * @throws QueueEmptyException if the queue is empty
      */
-    public Event dequeueEvent(long timeout, TimeUnit unit) throws InterruptedException, QueueClosedException {
+    public Event dequeueEvent(long timeout, TimeUnit unit) throws InterruptedException, QueueClosedException, QueueEmptyException {
         lock.lock();
         try {
-            if (isClosed && queue.isEmpty()) {
+        	if (isClosed) {
                 LOGGER.warning("Queue is closed. Event will not be dequeued.");
                 throw new QueueClosedException("Queue is closed.");
+            }
+            
+            if (queue.isEmpty()) {
+            	LOGGER.warning("Queue is empty. Event will not be dequeued.");
+            	throw new QueueEmptyException("Queue is empty.");
             }
         } finally {
             lock.unlock();
@@ -167,9 +186,6 @@ public class EventQueue implements AutoCloseable {
         if (timeout <= 0) {
             LOGGER.fine("Attempting to dequeue event.");
             Event event = queue.poll();
-            if (event == null) {
-                throw new IllegalStateException("Queue is empty");
-            }
             LOGGER.fine("Dequeued event (timeout=" + timeout + ") of type: " + event.getClass().getSimpleName());
             return event;
         }
@@ -251,6 +267,15 @@ public class EventQueue implements AutoCloseable {
      */
     public boolean isClosed() {
         return isClosed;
+    }
+    
+    /**
+     * Checks if the queue is empty.
+     *
+     * @return true if the queue is empty, false otherwise
+     */
+    public boolean isEmpty() {
+        return queue.isEmpty();
     }
 
     /**

@@ -26,7 +26,7 @@ public class ClientCredentialsOAuthFlow implements Serializable {
 	 * @param tokenUrl
 	 */
 	@JsonbCreator
-	public ClientCredentialsOAuthFlow(@JsonbProperty String refreshUrl, @JsonbProperty Map<String, String> scopes, @JsonbProperty String tokenUrl) {
+	public ClientCredentialsOAuthFlow(@JsonbProperty("refreshUrl") String refreshUrl, @JsonbProperty("scopes") Map<String, String> scopes, @JsonbProperty("tokenUrl") String tokenUrl) {
 		this(tokenUrl, scopes);
 		this.refreshUrl = refreshUrl;
 	}

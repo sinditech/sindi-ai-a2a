@@ -18,7 +18,7 @@ public final class GetTaskPushNotificationConfigSuccessResponse extends JSONRPCR
 	 * @param result
 	 */
 	@JsonbCreator
-	public GetTaskPushNotificationConfigSuccessResponse(@JsonbProperty JSONRPCVersion jsonrpc, @JsonbProperty RequestId id, @JsonbProperty TaskPushNotificationConfig result) {
+	public GetTaskPushNotificationConfigSuccessResponse(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id, @JsonbProperty("result") TaskPushNotificationConfig result) {
 		super(jsonrpc, id, result);
 	}
 
@@ -30,5 +30,4 @@ public final class GetTaskPushNotificationConfigSuccessResponse extends JSONRPCR
 	public GetTaskPushNotificationConfigSuccessResponse(RequestId id, TaskPushNotificationConfig result) {
 		this(JSONRPCVersion.getLatest(), id, result);
 	}
-
 }

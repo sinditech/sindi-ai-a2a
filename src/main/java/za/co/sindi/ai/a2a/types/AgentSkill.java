@@ -36,8 +36,8 @@ public class AgentSkill implements Serializable {
 	 * @param security
 	 */
 	@JsonbCreator
-	public AgentSkill(@JsonbProperty String id, @JsonbProperty String name, @JsonbProperty String description, @JsonbProperty String[] tags, @JsonbProperty String[] examples, @JsonbProperty String[] inputModes,
-			@JsonbProperty String[] outputModes, @JsonbProperty Map<String, String[]> security) {
+	public AgentSkill(@JsonbProperty("id") String id, @JsonbProperty("name") String name, @JsonbProperty("description") String description, @JsonbProperty("tags") String[] tags, @JsonbProperty("examples") String[] examples, @JsonbProperty("inputModes") String[] inputModes,
+			@JsonbProperty("outputModes") String[] outputModes, @JsonbProperty("security") Map<String, String[]> security) {
 		this(id, name, description, tags);
 		this.examples = examples;
 		this.inputModes = inputModes;

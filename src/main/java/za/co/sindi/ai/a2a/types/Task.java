@@ -3,6 +3,7 @@
  */
 package za.co.sindi.ai.a2a.types;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -33,8 +34,8 @@ public final class Task implements Kind, StreamingKind, Event {
 	 * @param metadata
 	 */
 	@JsonbCreator
-	public Task(@JsonbProperty String id, @JsonbProperty String contextId, @JsonbProperty TaskStatus status, @JsonbProperty Message[] history, @JsonbProperty Artifact[] artifacts,
-			@JsonbProperty Map<String, Object> metadata) {
+	public Task(@JsonbProperty("id") String id, @JsonbProperty("contextId") String contextId, @JsonbProperty("status") TaskStatus status, @JsonbProperty("history") Message[] history, @JsonbProperty("artifacts") Artifact[] artifacts,
+			@JsonbProperty("metadata") Map<String, Object> metadata) {
 		super();
 		this.id = id;
 		this.contextId = contextId;
@@ -168,6 +169,13 @@ public final class Task implements Kind, StreamingKind, Event {
 		public Builder history(Message[] history) {
 			this.history = history;
 			return this;
+		}
+		
+		/**
+		 * @param history the history to set
+		 */
+		public Builder history(List<Message> history) {
+			return history(history.toArray(new Message[history.size()]));
 		}
 
 		/**

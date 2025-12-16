@@ -18,7 +18,7 @@ public final class DeleteTaskPushNotificationConfigSuccessResponse extends JSONR
 	 * @param result
 	 */
 	@JsonbCreator
-	public DeleteTaskPushNotificationConfigSuccessResponse(@JsonbProperty JSONRPCVersion jsonrpc, @JsonbProperty RequestId id) {
+	public DeleteTaskPushNotificationConfigSuccessResponse(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id) {
 		super(jsonrpc, id, null);
 	}
 

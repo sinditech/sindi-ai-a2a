@@ -7,13 +7,14 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
 
+import jakarta.json.bind.annotation.JsonbCreator;
 import jakarta.json.bind.annotation.JsonbProperty;
 
 /**
  * @author Buhake Sindi
  * @since 21 October 2025
  */
-public record Artifact(@JsonbProperty String artifactId, @JsonbProperty String name, @JsonbProperty String description, @JsonbProperty Part[] parts, @JsonbProperty Map<String, Object> metadata, @JsonbProperty String[] extensions) implements Serializable {
+public record Artifact(String artifactId, String name, String description, Part[] parts, Map<String, Object> metadata, String[] extensions) implements Serializable {
 
 	public Artifact {
 		artifactId = Objects.requireNonNull(artifactId, "Artifact ID is required.");
@@ -21,6 +22,11 @@ public record Artifact(@JsonbProperty String artifactId, @JsonbProperty String n
 	
 	public Artifact(String artifactId) {
 		this(artifactId, null, null, null, null, null);
+	}
+	
+	@JsonbCreator
+	public static Artifact create(@JsonbProperty("artifactId") String artifactId, @JsonbProperty("name") String name, @JsonbProperty("description") String description, @JsonbProperty("parts") Part[] parts, @JsonbProperty("metadata") Map<String, Object> metadata, @JsonbProperty("extensions") String[] extensions) {
+		return new Artifact(artifactId, name, description, parts, metadata, extensions);
 	}
 	
 	public static final class Builder {
@@ -91,7 +97,7 @@ public record Artifact(@JsonbProperty String artifactId, @JsonbProperty String n
 		}
 		
 		public Artifact build() {
-			return new Artifact(artifactId, name, description, parts, metadata, extensions);
+			return Artifact.create(artifactId, name, description, parts, metadata, extensions);
 		}
 	}
 }

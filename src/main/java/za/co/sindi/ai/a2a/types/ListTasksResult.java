@@ -11,7 +11,7 @@ import jakarta.json.bind.annotation.JsonbProperty;
  * @author Buhake Sindi
  * @since 23 October 2025
  */
-public record ListTasksResult(@JsonbProperty Task[] tasks, @JsonbProperty long totalSize, @JsonbProperty long pageSize, @JsonbProperty String nextPageToken) {
+public record ListTasksResult(@JsonbProperty("tasks") Task[] tasks, @JsonbProperty("totalSize") long totalSize, @JsonbProperty("pageSize") long pageSize, @JsonbProperty("nextPageToken") String nextPageToken) {
 	
 	public ListTasksResult {
 		tasks = Objects.requireNonNull(tasks,"Tasks are required.");

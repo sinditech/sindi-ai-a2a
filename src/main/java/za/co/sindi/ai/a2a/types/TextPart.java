@@ -30,7 +30,7 @@ public final class TextPart extends PartBase {
 	 * @param metadata
 	 */
 	@JsonbCreator
-	public TextPart(@JsonbProperty String text, @JsonbProperty Map<String, Object> metadata) {
+	public TextPart(@JsonbProperty("text") String text, @JsonbProperty("metadata") Map<String, Object> metadata) {
 		this(text);
 		setMetadata(metadata);
 	}

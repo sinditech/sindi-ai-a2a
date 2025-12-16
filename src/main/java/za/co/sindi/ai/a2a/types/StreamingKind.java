@@ -19,6 +19,6 @@ import jakarta.json.bind.annotation.JsonbTypeInfo;
 	    @JsonbSubtype(alias=TaskArtifactUpdateEvent.KIND, type=TaskArtifactUpdateEvent.class),
 	}
 )
-public sealed interface StreamingKind permits Message, Task, TaskStatusUpdateEvent, TaskArtifactUpdateEvent {
+public sealed interface StreamingKind extends Kind permits Message, Task, TaskStatusUpdateEvent, TaskArtifactUpdateEvent {
 
 }

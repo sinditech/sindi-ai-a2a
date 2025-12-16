@@ -30,7 +30,7 @@ public final class FilePart extends PartBase {
 	 * @param metadata
 	 */
 	@JsonbCreator
-	public FilePart(@JsonbProperty FileBase file, @JsonbProperty Map<String, Object> metadata) {
+	public FilePart(@JsonbProperty("file") FileBase file, @JsonbProperty("metadata") Map<String, Object> metadata) {
 		this(file);
 		setMetadata(metadata);
 	}

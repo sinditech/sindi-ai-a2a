@@ -23,7 +23,7 @@ public final class TaskNotCancelableError extends JSONRPCError implements A2AErr
 	 * @param data
 	 */
 	 @JsonbCreator
-	public TaskNotCancelableError(@JsonbProperty int code, @JsonbProperty String message, @JsonbProperty Map<String, Object> data) {
+	public TaskNotCancelableError(@JsonbProperty("code") int code, @JsonbProperty("message") String message, @JsonbProperty("data") Map<String, Object> data) {
 		super(code, message, data);
 		// TODO Auto-generated constructor stub
 	}

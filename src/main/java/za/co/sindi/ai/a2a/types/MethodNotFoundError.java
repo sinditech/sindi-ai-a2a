@@ -23,7 +23,7 @@ public final class MethodNotFoundError extends JSONRPCError implements A2AError 
 	 * @param data
 	 */
 	 @JsonbCreator
-	public MethodNotFoundError(@JsonbProperty int code, @JsonbProperty String message, @JsonbProperty Map<String, Object> data) {
+	public MethodNotFoundError(@JsonbProperty("code") int code, @JsonbProperty("message") String message, @JsonbProperty("data") Map<String, Object> data) {
 		super(code, message, data);
 		// TODO Auto-generated constructor stub
 	}

@@ -23,7 +23,7 @@ public final class InvalidAgentResponseError extends JSONRPCError implements A2A
 	 * @param data
 	 */
 	 @JsonbCreator
-	public InvalidAgentResponseError(@JsonbProperty int code, @JsonbProperty String message, @JsonbProperty Map<String, Object> data) {
+	public InvalidAgentResponseError(@JsonbProperty("code") int code, @JsonbProperty("message") String message, @JsonbProperty("data") Map<String, Object> data) {
 		super(code, message, data);
 		// TODO Auto-generated constructor stub
 	}

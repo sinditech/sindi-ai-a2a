@@ -194,7 +194,7 @@ public class RequestContext {
 		/**
 		 * @return the params
 		 */
-		public MessageSendParams getParams() {
+		protected MessageSendParams getParams() {
 			return params;
 		}
 

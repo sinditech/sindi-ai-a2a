@@ -30,7 +30,7 @@ public class AgentExtension implements Serializable {
 	 * @param parameters
 	 */
 	@JsonbCreator
-	public AgentExtension(@JsonbProperty String uri, @JsonbProperty String description, @JsonbProperty Boolean required, @JsonbProperty("params") Map<String, Object> parameters) {
+	public AgentExtension(@JsonbProperty("uri") String uri, @JsonbProperty("description") String description, @JsonbProperty("required") Boolean required, @JsonbProperty("params") Map<String, Object> parameters) {
 		this(uri);
 		this.description = description;
 		this.required = required;

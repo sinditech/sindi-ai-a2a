@@ -21,7 +21,7 @@ public final class CancelTaskRequest extends JSONRPCRequest<TaskIdParams> implem
 	 * @param params
 	 */
 	@JsonbCreator
-	public CancelTaskRequest(@JsonbProperty JSONRPCVersion jsonrpc, @JsonbProperty RequestId id, @JsonbProperty String method, @JsonbProperty TaskIdParams params) {
+	public CancelTaskRequest(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id, @JsonbProperty("method") String method, @JsonbProperty("params") TaskIdParams params) {
 		super(jsonrpc, id, method, params);
 		// TODO Auto-generated constructor stub
 		if (!DEFAULT_METHOD.equals(method)) throw new IllegalArgumentException("Invalid " + this.getClass().getSimpleName() + " method.");

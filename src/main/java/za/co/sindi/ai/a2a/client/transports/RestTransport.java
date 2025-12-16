@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -29,30 +28,22 @@ import za.co.sindi.ai.a2a.client.A2AClientTimeoutError;
 import za.co.sindi.ai.a2a.client.middleware.ClientCallContext;
 import za.co.sindi.ai.a2a.client.middleware.ClientCallInterceptor;
 import za.co.sindi.ai.a2a.client.middleware.ClientCallInterceptor.RequestPayloadAndKeywordArguments;
+import za.co.sindi.ai.a2a.extensions.A2AExtensions;
 import za.co.sindi.ai.a2a.types.AgentCard;
-import za.co.sindi.ai.a2a.types.CancelTaskRequest;
-import za.co.sindi.ai.a2a.types.CancelTaskSuccessResponse;
 import za.co.sindi.ai.a2a.types.GetAuthenticatedExtendedCardSuccessResponse;
 import za.co.sindi.ai.a2a.types.GetTaskPushNotificationConfigParams;
-import za.co.sindi.ai.a2a.types.GetTaskPushNotificationConfigSuccessResponse;
-import za.co.sindi.ai.a2a.types.GetTaskSuccessResponse;
 import za.co.sindi.ai.a2a.types.JSONRPCErrorResponse;
-import za.co.sindi.ai.a2a.types.JSONRPCRequest;
-import za.co.sindi.ai.a2a.types.JSONRPCResponse;
-import za.co.sindi.ai.a2a.types.JSONRPCResultResponse;
 import za.co.sindi.ai.a2a.types.Kind;
 import za.co.sindi.ai.a2a.types.MessageSendParams;
-import za.co.sindi.ai.a2a.types.RequestId;
-import za.co.sindi.ai.a2a.types.SendMessageRequest;
-import za.co.sindi.ai.a2a.types.SendMessageSuccessResponse;
-import za.co.sindi.ai.a2a.types.SendStreamingMessageSuccessResponse;
-import za.co.sindi.ai.a2a.types.SetTaskPushNotificationConfigRequest;
-import za.co.sindi.ai.a2a.types.SetTaskPushNotificationConfigSuccessResponse;
 import za.co.sindi.ai.a2a.types.StreamingKind;
 import za.co.sindi.ai.a2a.types.Task;
 import za.co.sindi.ai.a2a.types.TaskIdParams;
 import za.co.sindi.ai.a2a.types.TaskPushNotificationConfig;
 import za.co.sindi.ai.a2a.types.TaskQueryParams;
+import za.co.sindi.ai.a2a.types.rest.CancelTaskRequest;
+import za.co.sindi.ai.a2a.types.rest.CreateTaskPushNotificationConfigRequest;
+import za.co.sindi.ai.a2a.types.rest.SendMessageResponse;
+import za.co.sindi.ai.a2a.types.rest.StreamResponse;
 import za.co.sindi.ai.a2a.utils.JsonUtils;
 import za.co.sindi.commons.net.URIBuilder;
 import za.co.sindi.commons.net.http.WithErrorBodyHandler;
@@ -74,6 +65,7 @@ public class RestTransport implements ClientTransport {
 	private String agentUrl;
 	private AgentCard agentCard;
 	private final List<ClientCallInterceptor> interceptors;
+	private final List<String> extensions;
 	private boolean needsExtendedCard;
 	
 	/**
@@ -81,9 +73,10 @@ public class RestTransport implements ClientTransport {
 	 * @param agentUrl
 	 * @param agentCard
 	 * @param interceptors
+	 * @param extensions
 	 */
 	public RestTransport(HttpClient httpClient, String agentUrl, AgentCard agentCard,
-			List<ClientCallInterceptor> interceptors) {
+			List<ClientCallInterceptor> interceptors, final List<String> extensions) {
 		super();
 		this.httpClient = Objects.requireNonNull(httpClient, "An HTTP Client is required.");
 		this.agentUrl = agentUrl != null && !agentUrl.isEmpty() ? agentUrl : agentCard != null ? agentCard.getUrl() : null;
@@ -92,6 +85,7 @@ public class RestTransport implements ClientTransport {
 		this.needsExtendedCard = agentCard != null && agentCard.getSupportsAuthenticatedExtendedCard() != null ? agentCard.getSupportsAuthenticatedExtendedCard() : true;
 		if (this.agentUrl == null || this.agentUrl.isEmpty()) throw new IllegalArgumentException("Must provide either an agent card or an agent URL.");
 		this.agentUrl = this.agentUrl.replaceAll("/+$", "");
+		this.extensions = extensions;
 	}
 	
 	private RequestPayloadAndKeywordArguments applyInterceptors(final /*Map<String, Object>*/ Object requestPayload, final Map<String, Object> httpKeywordArguments, final ClientCallContext context) {
@@ -108,75 +102,80 @@ public class RestTransport implements ClientTransport {
 	}
 
 	@Override
-	public Kind sendMessage(MessageSendParams request, ClientCallContext context) {
+	public Kind sendMessage(MessageSendParams request, ClientCallContext context, List<String> extensions) {
 		// TODO Auto-generated method stub
 		Preconditions.checkArgument(request != null, "A MessageSendParams request is required.");
-		SendMessageRequest sendMessageRequest = new SendMessageRequest(RequestId.of(UUID.randomUUID().toString()), request);
-		RequestPayloadAndKeywordArguments requestPayloadAndKeywordArguments = applyInterceptors(sendMessageRequest, getHttpArguments(context), context);
-		SendMessageSuccessResponse response = sendPostRequest("/v1/message:send", sendMessageRequest, requestPayloadAndKeywordArguments.keywordArguments(), SendMessageSuccessResponse.class);
-		return response.getResult();
+		Map<String, Object> modifiedKeywordArguments = A2AExtensions.updateExtensionHeader(getHttpArguments(context), extensions != null && !extensions.isEmpty() ? extensions : this.extensions);
+		RequestPayloadAndKeywordArguments requestPayloadAndKeywordArguments = applyInterceptors(request, modifiedKeywordArguments, context);
+		SendMessageResponse response = sendPostRequest("/v1/message:send", request, requestPayloadAndKeywordArguments.keywordArguments(), SendMessageResponse.class);
+		if (response.message() != null) return response.message();
+		if (response.task() != null) return response.task();
+		throw new IllegalStateException("Invalid kind received (neither a message or task).");
 	}
 
 	@Override
 	public void sendMessageStream(MessageSendParams request, Consumer<StreamingKind> eventDataConsumer,
-			Consumer<Throwable> eventErrorConsumer, ClientCallContext context) {
+			Consumer<Throwable> eventErrorConsumer, ClientCallContext context, List<String> extensions) {
 		// TODO Auto-generated method stub
 		Preconditions.checkArgument(request != null, "A MessageSendParams request is required.");
-		SendMessageRequest sendMessageRequest = new SendMessageRequest(RequestId.of(UUID.randomUUID().toString()), request);
-		RequestPayloadAndKeywordArguments requestPayloadAndKeywordArguments = applyInterceptors(sendMessageRequest, getHttpArguments(context), context);
-		sendPostRequest("/v1/message:stream", sendMessageRequest, requestPayloadAndKeywordArguments.keywordArguments(), eventDataConsumer, eventErrorConsumer, SendStreamingMessageSuccessResponse.class);
+		Map<String, Object> modifiedKeywordArguments = A2AExtensions.updateExtensionHeader(getHttpArguments(context), extensions != null && !extensions.isEmpty() ? extensions : this.extensions);
+		RequestPayloadAndKeywordArguments requestPayloadAndKeywordArguments = applyInterceptors(request, modifiedKeywordArguments, context);
+		sendPostRequest("/v1/message:stream", request, requestPayloadAndKeywordArguments.keywordArguments(), eventDataConsumer, eventErrorConsumer, StreamResponse.class);
 	}
 
 	@Override
-	public Task getTask(TaskQueryParams request, ClientCallContext context) {
+	public Task getTask(TaskQueryParams request, ClientCallContext context, List<String> extensions) {
 		// TODO Auto-generated method stub
 		Preconditions.checkArgument(request != null, "A TaskQueryParams request is required.");
-		RequestPayloadAndKeywordArguments requestPayloadAndKeywordArguments = applyInterceptors(request, getHttpArguments(context), context);
-		GetTaskSuccessResponse response = sendGetRequest("/v1/tasks/" + request.id(), request.historyLength() == null ? null : Map.of("historyLength", String.valueOf(request.historyLength())) , requestPayloadAndKeywordArguments.keywordArguments(), GetTaskSuccessResponse.class);
-		return response.getResult();
+		Map<String, Object> modifiedKeywordArguments = A2AExtensions.updateExtensionHeader(getHttpArguments(context), extensions != null && !extensions.isEmpty() ? extensions : this.extensions);
+		RequestPayloadAndKeywordArguments requestPayloadAndKeywordArguments = applyInterceptors(request, modifiedKeywordArguments, context);
+		return sendGetRequest("/v1/tasks/" + request.id(), request.historyLength() == null ? null : Map.of("historyLength", String.valueOf(request.historyLength())) , requestPayloadAndKeywordArguments.keywordArguments(), Task.class);
 	}
 
 	@Override
-	public Task cancelTask(TaskIdParams request, ClientCallContext context) {
+	public Task cancelTask(TaskIdParams request, ClientCallContext context, List<String> extensions) {
 		// TODO Auto-generated method stub
 		Preconditions.checkArgument(request != null, "A TaskIdParams request is required.");
-		CancelTaskRequest cancelTaskRequest = new CancelTaskRequest(RequestId.of(UUID.randomUUID().toString()), request);
-		RequestPayloadAndKeywordArguments requestPayloadAndKeywordArguments = applyInterceptors(cancelTaskRequest, getHttpArguments(context), context);
-		CancelTaskSuccessResponse response = sendPostRequest("/v1/tasks/" + request.id() + ":cancel", cancelTaskRequest, requestPayloadAndKeywordArguments.keywordArguments(), CancelTaskSuccessResponse.class);
-		return response.getResult();
+		CancelTaskRequest cancelTaskRequest = new CancelTaskRequest("tasks/" + request.id());
+		Map<String, Object> modifiedKeywordArguments = A2AExtensions.updateExtensionHeader(getHttpArguments(context), extensions != null && !extensions.isEmpty() ? extensions : this.extensions);
+		RequestPayloadAndKeywordArguments requestPayloadAndKeywordArguments = applyInterceptors(cancelTaskRequest, modifiedKeywordArguments, context);
+		return sendPostRequest("/v1/tasks/" + request.id() + ":cancel", cancelTaskRequest, requestPayloadAndKeywordArguments.keywordArguments(), Task.class);
 	}
 
 	@Override
-	public TaskPushNotificationConfig setTaskCallback(TaskPushNotificationConfig request, ClientCallContext context) {
+	public TaskPushNotificationConfig setTaskCallback(TaskPushNotificationConfig request, ClientCallContext context,
+			List<String> extensions) {
 		// TODO Auto-generated method stub
 		Preconditions.checkArgument(request != null, "A TaskPushNotificationConfig request is required.");
-		SetTaskPushNotificationConfigRequest setTaskPushNotificationConfigRequest = new SetTaskPushNotificationConfigRequest(RequestId.of(UUID.randomUUID().toString()), request);
-		RequestPayloadAndKeywordArguments requestPayloadAndKeywordArguments = applyInterceptors(setTaskPushNotificationConfigRequest, getHttpArguments(context), context);
-		SetTaskPushNotificationConfigSuccessResponse response = sendPostRequest("/v1/tasks/" + request.taskId() + "/pushNotificationConfigs", setTaskPushNotificationConfigRequest, requestPayloadAndKeywordArguments.keywordArguments(), SetTaskPushNotificationConfigSuccessResponse.class);
-		return response.getResult();
+		CreateTaskPushNotificationConfigRequest createTaskPushNotificationConfigRequest = new CreateTaskPushNotificationConfigRequest(request);
+		Map<String, Object> modifiedKeywordArguments = A2AExtensions.updateExtensionHeader(getHttpArguments(context), extensions != null && !extensions.isEmpty() ? extensions : this.extensions);
+		RequestPayloadAndKeywordArguments requestPayloadAndKeywordArguments = applyInterceptors(createTaskPushNotificationConfigRequest, modifiedKeywordArguments, context);
+		return sendPostRequest("/v1/tasks/" + request.taskId() + "/pushNotificationConfigs", createTaskPushNotificationConfigRequest, requestPayloadAndKeywordArguments.keywordArguments(), TaskPushNotificationConfig.class);
 	}
 
 	@Override
-	public TaskPushNotificationConfig getTaskCallback(GetTaskPushNotificationConfigParams request, ClientCallContext context) {
+	public TaskPushNotificationConfig getTaskCallback(GetTaskPushNotificationConfigParams request,
+			ClientCallContext context, List<String> extensions) {
 		// TODO Auto-generated method stub
 		Preconditions.checkArgument(request != null, "A GetTaskPushNotificationConfigParams request is required.");
-		RequestPayloadAndKeywordArguments requestPayloadAndKeywordArguments = applyInterceptors(request, getHttpArguments(context), context);
-		GetTaskPushNotificationConfigSuccessResponse response = sendGetRequest("/v1/tasks/" + request.id() + "/pushNotificationConfigs/" + request.pushNotificationConfigId(), null, requestPayloadAndKeywordArguments.keywordArguments(), GetTaskPushNotificationConfigSuccessResponse.class);
-		return response.getResult();
+		Map<String, Object> modifiedKeywordArguments = A2AExtensions.updateExtensionHeader(getHttpArguments(context), extensions != null && !extensions.isEmpty() ? extensions : this.extensions);
+		RequestPayloadAndKeywordArguments requestPayloadAndKeywordArguments = applyInterceptors(request, modifiedKeywordArguments, context);
+		return sendGetRequest("/v1/tasks/" + request.id() + "/pushNotificationConfigs/" + request.pushNotificationConfigId(), null, requestPayloadAndKeywordArguments.keywordArguments(), TaskPushNotificationConfig.class);
 	}
 
 	@Override
 	public void resubscribe(TaskIdParams request, Consumer<StreamingKind> eventDataConsumer,
-			Consumer<Throwable> eventErrorConsumer, ClientCallContext context) {
+			Consumer<Throwable> eventErrorConsumer, ClientCallContext context, List<String> extensions) {
 		// TODO Auto-generated method stub
 		Preconditions.checkArgument(request != null, "A TaskIdParams request is required.");
-		RequestPayloadAndKeywordArguments requestPayloadAndKeywordArguments = applyInterceptors(request, getHttpArguments(context), context);
+		Map<String, Object> modifiedKeywordArguments = A2AExtensions.updateExtensionHeader(getHttpArguments(context), extensions != null && !extensions.isEmpty() ? extensions : this.extensions);
+		RequestPayloadAndKeywordArguments requestPayloadAndKeywordArguments = applyInterceptors(request, modifiedKeywordArguments, context);
 		requestPayloadAndKeywordArguments.keywordArguments().remove("timeout");
-		sendGetRequest("/v1/tasks/" + request.id() + ":subscribe", null, requestPayloadAndKeywordArguments.keywordArguments(), eventDataConsumer, eventErrorConsumer, SendStreamingMessageSuccessResponse.class);
+		sendGetRequest("/v1/tasks/" + request.id() + ":subscribe", null, requestPayloadAndKeywordArguments.keywordArguments(), eventDataConsumer, eventErrorConsumer, StreamResponse.class);
 	}
 
 	@Override
-	public AgentCard getCard(ClientCallContext context) {
+	public AgentCard getCard(ClientCallContext context, List<String> extensions) {
 		// TODO Auto-generated method stub
 		if (agentCard == null) {
 			A2ACardResolver resolver = new A2ACardResolver(httpClient, agentUrl);
@@ -186,9 +185,9 @@ public class RestTransport implements ClientTransport {
 		
 		if (!needsExtendedCard) return agentCard;
 		
-		RequestPayloadAndKeywordArguments requestPayloadAndKeywordArguments = applyInterceptors(null, getHttpArguments(context), context);
-		GetAuthenticatedExtendedCardSuccessResponse response = sendGetRequest("/v1/card", null, requestPayloadAndKeywordArguments.keywordArguments(), GetAuthenticatedExtendedCardSuccessResponse.class);
-		agentCard = response.getResult();
+		Map<String, Object> modifiedKeywordArguments = A2AExtensions.updateExtensionHeader(getHttpArguments(context), extensions != null && !extensions.isEmpty() ? extensions : this.extensions);
+		RequestPayloadAndKeywordArguments requestPayloadAndKeywordArguments = applyInterceptors(null, modifiedKeywordArguments, context);
+		agentCard = sendGetRequest("/v1/card", null, requestPayloadAndKeywordArguments.keywordArguments(), AgentCard.class);
 		needsExtendedCard = false;
 		return agentCard;
 	}
@@ -227,7 +226,7 @@ public class RestTransport implements ClientTransport {
 		return getRequestBuilder.build();
 	}
 	
-	private <REQ extends JSONRPCRequest<?>> HttpRequest createHttpPOSTRequest(final String url, final REQ requestPayload, final Map<String, Object> httpKeywordArguments) {
+	private <REQ> HttpRequest createHttpPOSTRequest(final String url, final REQ requestPayload, final Map<String, Object> httpKeywordArguments) {
 		HttpRequest.Builder postRequestBuilder = HttpRequest.newBuilder(URI.create(url))
 															 .header("Content-Type", "application/json")
 															 .POST(BodyPublishers.ofString(JsonUtils.marshall(requestPayload)));
@@ -246,7 +245,7 @@ public class RestTransport implements ClientTransport {
 		return postRequestBuilder.build();
 	}
 	
-	private <REQ extends JSONRPCRequest<?>, RES extends JSONRPCResponse> RES sendGetRequest(final String targetUrl, final Map<String, String> queryParameters, final Map<String, Object> httpKeywordArguments, final Class<RES> expectedResultType) {
+	private <RES> RES sendGetRequest(final String targetUrl, final Map<String, String> queryParameters, final Map<String, Object> httpKeywordArguments, final Class<RES> expectedResultType) {
 		try {
 			HttpResponse<String> response = httpClient.send(createHttpGETRequest(agentUrl + targetUrl, queryParameters, httpKeywordArguments), BodyHandlers.ofString());
 			raiseExceptionsIfAny(response);
@@ -260,15 +259,21 @@ public class RestTransport implements ClientTransport {
 		}
 	}
 	
-	private <REQ extends JSONRPCRequest<?>, RES extends JSONRPCResponse, T extends StreamingKind> void sendGetRequest(final String targetUrl, final Map<String, String> queryParameters, final Map<String, Object> httpKeywordArguments, Consumer<T> dataConsumer, Consumer<Throwable> errorConsumer, final Class<RES> expectedResultType) {
+	private <RES, T extends StreamingKind> void sendGetRequest(final String targetUrl, final Map<String, String> queryParameters, final Map<String, Object> httpKeywordArguments, Consumer<T> dataConsumer, Consumer<Throwable> errorConsumer, final Class<RES> expectedResultType) {
 		try {
 			@SuppressWarnings("unchecked")
 			Function<Event, T> mapper = event -> {
 				if (event instanceof MessageEvent me) {
 					RES response = JsonUtils.unmarshall(me.getData(), expectedResultType);
-					if (response instanceof JSONRPCResultResponse<?> result) return (T) result.getResult();
+					if (response instanceof StreamResponse result) {
+						if (result.message() != null) return (T) result.message();
+						if (result.task() != null) return (T) result.task();
+						if (result.artifactUpdate() != null) return (T) result.artifactUpdate();
+						if (result.statusUpdate() != null) return (T) result.statusUpdate();
+					};
 				}
 				
+				if (errorConsumer != null) errorConsumer.accept(new IllegalStateException("Unable to find a Streaming kind from response."));
 				return null;
 			};
 			
@@ -284,7 +289,7 @@ public class RestTransport implements ClientTransport {
 		}
 	}
 	
-	private <REQ extends JSONRPCRequest<?>, RES extends JSONRPCResponse> RES sendPostRequest(final String targetUrl, final REQ requestPayload, final Map<String, Object> httpKeywordArguments, final Class<RES> expectedResultType) {
+	private <REQ, RES> RES sendPostRequest(final String targetUrl, final REQ requestPayload, final Map<String, Object> httpKeywordArguments, final Class<RES> expectedResultType) {
 		try {
 			HttpResponse<String> response = httpClient.send(createHttpPOSTRequest(agentUrl + targetUrl, requestPayload, httpKeywordArguments), BodyHandlers.ofString());
 			raiseExceptionsIfAny(response);
@@ -298,15 +303,21 @@ public class RestTransport implements ClientTransport {
 		}
 	}
 	
-	private <REQ extends JSONRPCRequest<?>, RES extends JSONRPCResponse, T extends StreamingKind> void sendPostRequest(final String targetUrl, final REQ requestPayload, final Map<String, Object> httpKeywordArguments, Consumer<T> dataConsumer, Consumer<Throwable> errorConsumer, final Class<RES> expectedResultType) {
+	private <REQ, RES, T extends StreamingKind> void sendPostRequest(final String targetUrl, final REQ requestPayload, final Map<String, Object> httpKeywordArguments, Consumer<T> dataConsumer, Consumer<Throwable> errorConsumer, final Class<RES> expectedResultType) {
 		try {
 			@SuppressWarnings("unchecked")
 			Function<Event, T> mapper = event -> {
 				if (event instanceof MessageEvent me) {
 					RES response = JsonUtils.unmarshall(me.getData(), expectedResultType);
-					if (response instanceof JSONRPCResultResponse<?> result) return (T) result.getResult();
+					if (response instanceof StreamResponse result) {
+						if (result.message() != null) return (T) result.message();
+						if (result.task() != null) return (T) result.task();
+						if (result.artifactUpdate() != null) return (T) result.artifactUpdate();
+						if (result.statusUpdate() != null) return (T) result.statusUpdate();
+					};
 				}
 				
+				if (errorConsumer != null) errorConsumer.accept(new IllegalStateException("Unable to find a Streaming kind from response."));
 				return null;
 			};
 			

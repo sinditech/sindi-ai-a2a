@@ -21,7 +21,7 @@ public final class ListTasksRequest extends JSONRPCRequest<ListTasksParams> impl
 	 * @param params
 	 */
 	@JsonbCreator
-	public ListTasksRequest(@JsonbProperty JSONRPCVersion jsonrpc, @JsonbProperty RequestId id, @JsonbProperty String method, @JsonbProperty ListTasksParams params) {
+	public ListTasksRequest(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id, @JsonbProperty("method") String method, @JsonbProperty("params") ListTasksParams params) {
 		super(jsonrpc, id, method, params);
 		// TODO Auto-generated constructor stub
 		if (!DEFAULT_METHOD.equals(method)) throw new IllegalArgumentException("Invalid " + this.getClass().getSimpleName() + " method.");

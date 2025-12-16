@@ -21,7 +21,7 @@ public final class GetTaskPushNotificationConfigRequest extends JSONRPCRequest<G
 	 * @param params
 	 */
 	@JsonbCreator
-	public GetTaskPushNotificationConfigRequest(@JsonbProperty JSONRPCVersion jsonrpc, @JsonbProperty RequestId id, @JsonbProperty String method, @JsonbProperty GetTaskPushNotificationConfigParams params) {
+	public GetTaskPushNotificationConfigRequest(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id, @JsonbProperty("method") String method, @JsonbProperty("params") GetTaskPushNotificationConfigParams params) {
 		super(jsonrpc, id, method, params);
 		// TODO Auto-generated constructor stub
 		if (!DEFAULT_METHOD.equals(method)) throw new IllegalArgumentException("Invalid " + this.getClass().getSimpleName() + " method.");

@@ -31,7 +31,7 @@ public class ImplicitOAuthFlow implements Serializable {
 	 * @param scopes
 	 */
 	@JsonbCreator
-	public ImplicitOAuthFlow(@JsonbProperty String authorizationUrl, @JsonbProperty String refreshUrl, @JsonbProperty Map<String, String> scopes) {
+	public ImplicitOAuthFlow(@JsonbProperty("authorizationUrl") String authorizationUrl, @JsonbProperty("refreshUrl") String refreshUrl, @JsonbProperty("scopes") Map<String, String> scopes) {
 		this(authorizationUrl, scopes);
 		this.refreshUrl = refreshUrl;
 	}

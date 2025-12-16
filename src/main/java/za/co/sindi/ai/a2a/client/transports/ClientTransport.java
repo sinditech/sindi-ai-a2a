@@ -3,6 +3,7 @@
  */
 package za.co.sindi.ai.a2a.client.transports;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 import za.co.sindi.ai.a2a.client.middleware.ClientCallContext;
@@ -29,9 +30,10 @@ public interface ClientTransport extends AutoCloseable {
 	 * 
 	 * @param request
 	 * @param context
+	 * @param extensions
 	 * @return
 	 */
-	public Kind sendMessage(final MessageSendParams request, final ClientCallContext context);
+	public Kind sendMessage(final MessageSendParams request, final ClientCallContext context, final List<String> extensions);
 	
 	/**
 	 * Sends a streaming message request to the agent and yields responses as they arrive.
@@ -40,7 +42,7 @@ public interface ClientTransport extends AutoCloseable {
 	 * @param context
 	 * @return
 	 */
-	public void sendMessageStream(final MessageSendParams request, final Consumer<StreamingKind> eventDataConsumer, final Consumer<Throwable> eventErrorConsumer, final ClientCallContext context);
+	public void sendMessageStream(final MessageSendParams request, final Consumer<StreamingKind> eventDataConsumer, final Consumer<Throwable> eventErrorConsumer, final ClientCallContext context, final List<String> extensions);
 //	public Publisher<StreamingKind> sendMessageStream(final MessageSendParams request, final ClientCallContext context);
 	
 	/**
@@ -48,54 +50,60 @@ public interface ClientTransport extends AutoCloseable {
 	 * 
 	 * @param request
 	 * @param context
+	 * @param extensions
 	 * @return
 	 */
-	public Task getTask(final TaskQueryParams request, final ClientCallContext context);
+	public Task getTask(final TaskQueryParams request, final ClientCallContext context, final List<String> extensions);
 	
 	/**
 	 * Requests the agent to cancel a specific task.
 	 * 
 	 * @param request
 	 * @param context
+	 * @param extensions
 	 * @return
 	 */
-	public Task cancelTask(final TaskIdParams request, final ClientCallContext context);
+	public Task cancelTask(final TaskIdParams request, final ClientCallContext context, final List<String> extensions);
 	
 	/**
 	 * Sets or updates the push notification configuration for a specific task.
 	 * 
 	 * @param request
 	 * @param context
+	 * @param extensions
 	 * @return
 	 */
-	public TaskPushNotificationConfig setTaskCallback(final TaskPushNotificationConfig request, final ClientCallContext context);
+	public TaskPushNotificationConfig setTaskCallback(final TaskPushNotificationConfig request, final ClientCallContext context, final List<String> extensions);
 	
 	/**
 	 * Retrieves the push notification configuration for a specific task.
 	 * 
 	 * @param request
 	 * @param context
+	 * @param extensions
 	 * @return
 	 */
-	public TaskPushNotificationConfig getTaskCallback(final GetTaskPushNotificationConfigParams request, final ClientCallContext context);
+	public TaskPushNotificationConfig getTaskCallback(final GetTaskPushNotificationConfigParams request, final ClientCallContext context, final List<String> extensions);
 	
 	/**
 	 * Sends a streaming message request to the agent and yields responses as they arrive.
 	 * 
 	 * @param request
 	 * @param context
+	 * @param extensions
 	 * @return
 	 */
-	public void resubscribe(final TaskIdParams request, final Consumer<StreamingKind> eventDataConsumer, final Consumer<Throwable> eventErrorConsumer, final ClientCallContext context);
+	public void resubscribe(final TaskIdParams request, final Consumer<StreamingKind> eventDataConsumer, final Consumer<Throwable> eventErrorConsumer, final ClientCallContext context, final List<String> extensions);
 //	public StreamingKind resubscribe(final TaskIdParams request, final ClientCallContext context);
 	
 	/**
 	 * Retrieves the AgentCard.
 	 * 
 	 * @param context
+	 * @param extensions
 	 * @return
 	 */
-	public AgentCard getCard(final ClientCallContext context);
+	public AgentCard getCard(final ClientCallContext context, final List<String> extensions);
 	
 	/**
 	 * Closes the transport.

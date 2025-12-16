@@ -26,7 +26,7 @@ public final class MutualTLSSecurityScheme extends SecurityScheme {
 	 * @param description
 	 */
 	@JsonbCreator
-	public MutualTLSSecurityScheme(@JsonbProperty String description) {
+	public MutualTLSSecurityScheme(@JsonbProperty("description") String description) {
 		this();
 		// TODO Auto-generated constructor stub
 		setDescription(description);

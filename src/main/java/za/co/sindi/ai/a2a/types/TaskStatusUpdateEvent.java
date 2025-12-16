@@ -31,8 +31,8 @@ public final class TaskStatusUpdateEvent implements StreamingKind, UpdateEvent {
 	 * @param metadata
 	 */
 	@JsonbCreator
-	public TaskStatusUpdateEvent(@JsonbProperty String taskId, @JsonbProperty String contextId, @JsonbProperty TaskStatus status, @JsonbProperty("final") boolean isFinal,
-			@JsonbProperty Map<String, Object> metadata) {
+	public TaskStatusUpdateEvent(@JsonbProperty("taskId") String taskId, @JsonbProperty("contextId") String contextId, @JsonbProperty("status") TaskStatus status, @JsonbProperty("final") boolean isFinal,
+			@JsonbProperty("metadata") Map<String, Object> metadata) {
 		this(taskId, contextId, status, isFinal);
 		this.metadata = metadata;
 	}

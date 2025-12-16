@@ -59,15 +59,17 @@ public class BaseClient extends Client {
 	}
 
 	@Override
-	public void sendMessage(Message request, ClientCallContext context, Map<String, Object> requestMetadata) {
+	public void sendMessage(Message request, ClientCallContext context, final MessageSendConfiguration configuration, Map<String, Object> requestMetadata, final List<String> extensions) {
 		// TODO Auto-generated method stub
-		MessageSendConfiguration config = new MessageSendConfiguration(this.config.getAcceptedOutputModes() == null ? null : this.config.getAcceptedOutputModes().toArray(new String[this.config.getAcceptedOutputModes().size()]),
-				!this.config.isPolling(), null, this.config.getPushNotificationConfigs() == null || this.config.getPushNotificationConfigs().isEmpty() ? null : this.config.getPushNotificationConfigs().get(0));
+		MessageSendConfiguration baseConfig = new MessageSendConfiguration(this.config.acceptedOutputModes() == null ? null : this.config.acceptedOutputModes().toArray(new String[this.config.acceptedOutputModes().size()]),
+				!this.config.polling(), null, this.config.pushNotificationConfigs() == null || this.config.pushNotificationConfigs().isEmpty() ? null : this.config.pushNotificationConfigs().get(0));
+		
+		MessageSendConfiguration config = configuration == null ? baseConfig : configuration;
 		
 		MessageSendParams params = new MessageSendParams(config, request, requestMetadata);
 		
-		if (!this.config.isStreaming() || !card.getCapabilities().streaming()) {
-			Kind response = transport.sendMessage(params, context);
+		if (!this.config.streaming() || !card.getCapabilities().streaming()) {
+			Kind response = transport.sendMessage(params, context, extensions);
 			if (response instanceof Task task) consume(new ClientEvent(task, null), card);
 			else if (response instanceof Message message) consume(message, card);
 		} else {
@@ -79,19 +81,19 @@ public class BaseClient extends Client {
 					if (event instanceof Message message) {
 						consume(message, card);
 					} else {
-						processEvent(tracker, (Event)event);
+						processResponse(tracker, (Event)event);
 					}
 				} else {
-					processEvent(tracker, (Event)event);
+					processResponse(tracker, (Event)event);
 				}
 			};
-			transport.sendMessageStream(params, eventStream, null, context);
+			transport.sendMessageStream(params, eventStream, null, context, extensions);
 		}
 	}
 	
-	private ClientEvent processEvent(ClientTaskManager tracker, Event event) {
+	private ClientEvent processResponse(ClientTaskManager tracker, Event event) {
 		if (event instanceof Message) {
-			throw new A2AClientInvalidStateError("received a streamed Message from server after first response; this is not supported.");
+			throw new A2AClientInvalidStateError("Received a streamed Message from server after first response; this is not supported.");
 		}
 		
 		tracker.process(event);
@@ -103,41 +105,41 @@ public class BaseClient extends Client {
 	}
 
 	@Override
-	public Task getTask(TaskQueryParams request, ClientCallContext context) {
+	public Task getTask(TaskQueryParams request, ClientCallContext context, final List<String> extensions) {
 		// TODO Auto-generated method stub
-		return transport.getTask(request, context);
+		return transport.getTask(request, context, extensions);
 	}
 
 	@Override
-	public Task cancelTask(TaskIdParams request, ClientCallContext context) {
+	public Task cancelTask(TaskIdParams request, ClientCallContext context, final List<String> extensions) {
 		// TODO Auto-generated method stub
-		return transport.cancelTask(request, context);
+		return transport.cancelTask(request, context, extensions);
 	}
 
 	@Override
-	public TaskPushNotificationConfig setTaskCallback(TaskPushNotificationConfig request, ClientCallContext context) {
+	public TaskPushNotificationConfig setTaskCallback(TaskPushNotificationConfig request, ClientCallContext context, final List<String> extensions) {
 		// TODO Auto-generated method stub
-		return transport.setTaskCallback(request, context);
+		return transport.setTaskCallback(request, context, extensions);
 	}
 
 	@Override
-	public TaskPushNotificationConfig getTaskCallback(GetTaskPushNotificationConfigParams request, ClientCallContext context) {
+	public TaskPushNotificationConfig getTaskCallback(GetTaskPushNotificationConfigParams request, ClientCallContext context, final List<String> extensions) {
 		// TODO Auto-generated method stub
-		return transport.getTaskCallback(request, context);
+		return transport.getTaskCallback(request, context, extensions);
 	}
 
 	@Override
-	public void resusbcribe(TaskIdParams request, ClientCallContext context) {
+	public void resusbcribe(TaskIdParams request, ClientCallContext context, final List<String> extensions) {
 		// TODO Auto-generated method stub
-		if (!config.isStreaming() || !card.getCapabilities().streaming()) {
-            throw new A2AClientJSONRPCError(new UnsupportedOperationError("Client and/or server does not support resubscription"));
+		if (!config.streaming() || !card.getCapabilities().streaming()) {
+            throw new A2AClientJSONRPCError(new UnsupportedOperationError("Client and/or server does not support resubscription."));
         }
 		
 		ClientTaskManager tracker = new ClientTaskManager();
 		Consumer<StreamingKind> eventStream = event -> {
-			processEvent(tracker, (Event)event);
+			processResponse(tracker, (Event)event);
 		};
-		transport.resubscribe(request, eventStream, null, context);
+		transport.resubscribe(request, eventStream, null, context, extensions);
 	}
 
 	/**
@@ -147,9 +149,9 @@ public class BaseClient extends Client {
      * client's internal state with the new card.
 	 */
 	@Override
-	public AgentCard getAgentCard(ClientCallContext context) {
+	public AgentCard getAgentCard(ClientCallContext context, final List<String> extensions) {
 		// TODO Auto-generated method stub
-		this.card = transport.getCard(context);
+		this.card = transport.getCard(context, extensions);
 		return this.card;
 	}
 

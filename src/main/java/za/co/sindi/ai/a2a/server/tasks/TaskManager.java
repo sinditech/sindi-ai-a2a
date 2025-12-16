@@ -124,8 +124,8 @@ public class TaskManager {
 		matchAndUpdateTaskAndContextIds(event.getTaskId(), event.getContextId());
 		Task task = ensureTask(event);
 		LOGGER.fine(String.format("Updating task %s status to: %s", task.getId(), event.getStatus().toString()));
+		List<Message> history = new ArrayList<>();
 		if (task.getStatus().message() != null) {
-			List<Message> history = new ArrayList<>();
 			if (task.getHistory() != null && task.getHistory().length > 0) {
 				history.addAll(Arrays.asList(task.getHistory()));
 			}
@@ -136,7 +136,7 @@ public class TaskManager {
 			task.setMetadata(event.getMetadata());
 		}
 		
-		task = new Task.Builder(task).status(event.getStatus()).build();
+		task = new Task.Builder(task).status(event.getStatus()).history(history).build();
 		saveTask(task);
 		return task;
 	}
@@ -219,5 +219,26 @@ public class TaskManager {
 		Task task = new Task(taskId, contextId, new TaskStatus(TaskState.SUBMITTED));
 		task.setHistory(history);
 		return task;
+	}
+	
+	/**
+	 * Updates a task object in memory by adding a new message to its history.
+	 *
+     *   If the task has a message in its current status, that message is moved
+     *   to the history first.
+     *   
+	 * @param message The new {@link Message} to add to the history.
+	 * @param task The {@link Task} object to update.
+	 * @return The updated {@link Task} object (updated in-place).
+	 */
+	public Task updateWithMessage(final Message message, final Task task) {
+		List<Message> history = task.getHistory() != null && task.getHistory().length > 0 ? new ArrayList<>(List.of(task.getHistory())) : new ArrayList<>();
+		Task.Builder taskBuilder = new Task.Builder(task);
+		if (task.getStatus().message() != null) {
+			history.add(task.getStatus().message());
+			taskBuilder.status(TaskStatus.create(task.getStatus().state(), null, task.getStatus().timestamp()));
+		}
+		history.add(message);
+		return (currentTask = taskBuilder.history(history).build());
 	}
 }

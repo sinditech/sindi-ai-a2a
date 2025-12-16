@@ -5,13 +5,14 @@ package za.co.sindi.ai.a2a.types;
 
 import java.util.Objects;
 
+import jakarta.json.bind.annotation.JsonbCreator;
 import jakarta.json.bind.annotation.JsonbProperty;
 
 /**
  * @author Buhake Sindi
  * @since 22 October 2025
  */
-public record PushNotificationConfig(@JsonbProperty String id, @JsonbProperty String url, @JsonbProperty String token, @JsonbProperty PushNotificationAuthenticationInfo authentication) {
+public record PushNotificationConfig(String id, String url, String token, PushNotificationAuthenticationInfo authentication) {
 
 	public PushNotificationConfig {
 		url = Objects.requireNonNull(url, "The callback URL where the agent should send push notifications is required.");
@@ -19,6 +20,11 @@ public record PushNotificationConfig(@JsonbProperty String id, @JsonbProperty St
 	
 	public PushNotificationConfig(final String url) {
 		this(null, url, null, null);
+	}
+	
+	@JsonbCreator
+	public static PushNotificationConfig create(@JsonbProperty("id") String id, @JsonbProperty("url") String url, @JsonbProperty("token") String token, @JsonbProperty("authentication") PushNotificationAuthenticationInfo authentication) {
+		return new PushNotificationConfig(id, url, token, authentication);
 	}
 	
 	public static final class Builder {
@@ -69,7 +75,7 @@ public record PushNotificationConfig(@JsonbProperty String id, @JsonbProperty St
 		}
 		
 		public PushNotificationConfig build() {
-			return new PushNotificationConfig(id, url, token, authentication);
+			return PushNotificationConfig.create(id, url, token, authentication);
 		}
 	}
 }
