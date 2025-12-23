@@ -23,7 +23,6 @@ public final class CancelTaskSuccessResponse extends JSONRPCResultResponse<Task>
 	}
 
 	/**
-	 * @param jsonrpc
 	 * @param id
 	 * @param result
 	 */

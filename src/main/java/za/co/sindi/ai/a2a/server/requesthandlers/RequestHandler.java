@@ -130,7 +130,7 @@ public interface RequestHandler {
 	 * 
 	 * @param params Parameters including the task ID.
 	 * @param context Context provided by the server.
-	 * @return The List<{@link TaskPushNotificationConfig}> for the task.
+	 * @return The List&lt;{@link TaskPushNotificationConfig}&gt; for the task.
 	 */
 	public List<TaskPushNotificationConfig> onListTaskPushNotificationConfig(final ListTaskPushNotificationConfigParams params, final ServerCallContext context);
 	

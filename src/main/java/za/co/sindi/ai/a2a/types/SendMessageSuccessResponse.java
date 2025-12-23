@@ -23,7 +23,6 @@ public final class SendMessageSuccessResponse extends JSONRPCResultResponse<Kind
 	}
 
 	/**
-	 * @param jsonrpc
 	 * @param id
 	 * @param result
 	 */

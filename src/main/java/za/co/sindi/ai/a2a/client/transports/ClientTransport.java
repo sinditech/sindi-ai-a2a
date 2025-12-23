@@ -40,7 +40,6 @@ public interface ClientTransport extends AutoCloseable {
 	 * 
 	 * @param request
 	 * @param context
-	 * @return
 	 */
 	public void sendMessageStream(final MessageSendParams request, final Consumer<StreamingKind> eventDataConsumer, final Consumer<Throwable> eventErrorConsumer, final ClientCallContext context, final List<String> extensions);
 //	public Publisher<StreamingKind> sendMessageStream(final MessageSendParams request, final ClientCallContext context);
@@ -91,7 +90,6 @@ public interface ClientTransport extends AutoCloseable {
 	 * @param request
 	 * @param context
 	 * @param extensions
-	 * @return
 	 */
 	public void resubscribe(final TaskIdParams request, final Consumer<StreamingKind> eventDataConsumer, final Consumer<Throwable> eventErrorConsumer, final ClientCallContext context, final List<String> extensions);
 //	public StreamingKind resubscribe(final TaskIdParams request, final ClientCallContext context);

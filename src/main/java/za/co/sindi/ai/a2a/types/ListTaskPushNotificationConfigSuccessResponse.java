@@ -23,7 +23,6 @@ public final class ListTaskPushNotificationConfigSuccessResponse extends JSONRPC
 	}
 
 	/**
-	 * @param jsonrpc
 	 * @param id
 	 * @param result
 	 */

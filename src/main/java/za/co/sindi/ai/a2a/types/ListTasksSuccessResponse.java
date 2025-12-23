@@ -23,7 +23,6 @@ public final class ListTasksSuccessResponse extends JSONRPCResultResponse<ListTa
 	}
 
 	/**
-	 * @param jsonrpc
 	 * @param id
 	 * @param result
 	 */

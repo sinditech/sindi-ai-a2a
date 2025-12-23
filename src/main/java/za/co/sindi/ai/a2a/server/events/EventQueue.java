@@ -61,7 +61,7 @@ public class EventQueue implements AutoCloseable {
      * Initializes the EventQueue.
      *
      * @param maxQueueSize Maximum size of the queue. Must be greater than 0.
-     * @throws IllegalArgumentException if maxQueueSize <= 0
+     * @throws IllegalArgumentException if maxQueueSize &lt;= 0.
      */
     public EventQueue(int maxQueueSize) {
         if (maxQueueSize <= 0) {

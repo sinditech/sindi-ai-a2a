@@ -18,7 +18,6 @@ public final class GetAuthenticatedExtendedCardRequest extends JSONRPCRequest<Ob
 	 * @param jsonrpc
 	 * @param id
 	 * @param method
-	 * @param params
 	 */
 	@JsonbCreator
 	public GetAuthenticatedExtendedCardRequest(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id, @JsonbProperty("method") String method) {
@@ -29,7 +28,6 @@ public final class GetAuthenticatedExtendedCardRequest extends JSONRPCRequest<Ob
 
 	/**
 	 * @param id
-	 * @param params
 	 */
 	public GetAuthenticatedExtendedCardRequest(RequestId id) {
 		this(JSONRPCVersion.getLatest(), id, DEFAULT_METHOD);

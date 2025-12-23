@@ -23,7 +23,6 @@ public final class GetTaskSuccessResponse extends JSONRPCResultResponse<Task> {
 	}
 
 	/**
-	 * @param jsonrpc
 	 * @param id
 	 * @param result
 	 */

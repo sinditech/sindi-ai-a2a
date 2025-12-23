@@ -3,15 +3,45 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>za.co.sindi</groupId>
-	<artifactId>sindi-ai-google-a2a</artifactId>
+	<artifactId>sindi-ai-a2a</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>Google Agent2Agent Protocol implementation in Java</name>
+	<name>Sindi AI Agent2Agent</name>
+	<description>Google Agent2Agent Protocol implementation in Java</description>
+	<url>https://github.com/sinditech/sindi-ai-a2a</url>
+
+	<licenses>
+		<license>
+			<name>Apache License 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Buhake Sindi</name>
+			<timezone>+2</timezone>
+			<roles>
+				<role>PROJECT LEAD</role>
+			</roles>
+			<organization>Sindi Technologies (Pty) Ltd</organization>
+			<organizationUrl>https://www.sindi.co.za</organizationUrl>
+		</developer>
+	</developers>
+
 
 	<properties>
 		<maven.compiler.source>25</maven.compiler.source>
 		<maven.compiler.target>25</maven.compiler.target>
 		<maven.compiler.release>25</maven.compiler.release>
 	</properties>
+	
+	<scm>
+    	<connection>scm:git:git://github.com/sinditech/sindi-ai-a2a.git</connection>
+    	<developerConnection>scm:git:ssh://github.com:sinditech/sindi-ai-a2a.git</developerConnection>
+    	<url>http://github.com/sinditech/sindi-ai-a2a.git/tree/main</url>
+    	<tag>HEAD</tag>
+  	</scm>
 	
 	<repositories>
 		<repository>
@@ -34,7 +64,7 @@
 			<dependency>
 				<groupId>jakarta.json.bind</groupId>
 				<artifactId>jakarta.json.bind-api</artifactId>
-				<version>3.0.0</version>
+				<version>3.0.1</version>
 				<scope>provided</scope>
 			</dependency>
 
@@ -57,7 +87,7 @@
 			<dependency>
 				<groupId>za.co.sindi</groupId>
 				<artifactId>sindi-commons</artifactId>
-				<version>0.0.1-SNAPSHOT</version>
+				<version>0.0.3</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -95,6 +125,62 @@
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>3.14.1</version>
 				</plugin>
+
+				<!-- Maven Sources plugin -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-source-plugin</artifactId>
+					<version>3.4.0</version>
+					<executions>
+						<execution>
+							<id>attach-sources</id>
+							<goals>
+								<goal>jar</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+
+				<!-- Maven Javadoc plugin -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<version>3.12.0</version>
+					<executions>
+						<execution>
+							<id>attach-javadocs</id>
+							<goals>
+								<goal>jar</goal>
+							</goals>
+						</execution>
+					</executions>
+					<configuration>
+						<links>
+            				<link>https://docs.oracle.com/en/java/javase/17/docs/api/</link>
+          				</links>
+						<additionalOptions>
+							<additionalOption>-Xdoclint:none</additionalOption>
+						</additionalOptions>
+					</configuration>
+				</plugin>
+				
+				<plugin>
+					<groupId>org.sonatype.central</groupId>
+					<artifactId>central-publishing-maven-plugin</artifactId>
+					<version>0.9.0</version>
+					<extensions>true</extensions>
+					<configuration>
+						<publishingServerId>central</publishingServerId>
+						<autoPublish>true</autoPublish>
+						<waitUntil>published</waitUntil>
+					</configuration>
+				</plugin>
+				
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+		        	<artifactId>maven-gpg-plugin</artifactId>
+					<version>3.2.8</version>
+				</plugin>
 			</plugins>
 		</pluginManagement>
 
@@ -103,6 +189,61 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+			</plugin>
+			
+			<plugin>
+		        <groupId>org.sonatype.central</groupId>
+				<artifactId>central-publishing-maven-plugin</artifactId>
+			</plugin>
+			
+			<plugin>
+	        	<groupId>org.apache.maven.plugins</groupId>
+	        	<artifactId>maven-gpg-plugin</artifactId>
+	        </plugin>
 		</plugins>
 	</build>
+	
+	<profiles>
+		<profile>
+            <id>sign</id>
+            <activation>
+                <property>
+                    <name>sign</name>
+                </property>
+            </activation>
+            <build>
+				<plugins>
+					<!-- GPG Signed Components -->
+			      	<plugin>
+			        	<groupId>org.apache.maven.plugins</groupId>
+			        	<artifactId>maven-gpg-plugin</artifactId>
+			        	<executions>
+			          		<execution>
+			            		<id>sign-artifacts</id>
+			            		<phase>verify</phase>
+			            		<goals>
+			              			<goal>sign</goal>
+			            		</goals>
+			            		<configuration>
+				              		<gpgArguments>
+				                		<arg>--pinentry-mode</arg>
+				                		<arg>loopback</arg>
+				              		</gpgArguments>
+			            		</configuration>
+			          		</execution>
+			          	</executions>
+			      	</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>

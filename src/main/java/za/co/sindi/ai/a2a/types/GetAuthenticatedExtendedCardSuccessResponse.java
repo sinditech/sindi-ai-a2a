@@ -23,7 +23,6 @@ public final class GetAuthenticatedExtendedCardSuccessResponse extends JSONRPCRe
 	}
 
 	/**
-	 * @param jsonrpc
 	 * @param id
 	 * @param result
 	 */
