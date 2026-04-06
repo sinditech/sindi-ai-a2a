@@ -289,9 +289,21 @@ public abstract class Client implements AutoCloseable {
 	 * Retrieves the agent's card.
 	 * 
 	 * @param context
+	 * @param extensions
 	 * @return
 	 */
-	public abstract AgentCard getAgentCard(final ClientCallContext context, final List<String> extensions);
+	public AgentCard getAgentCard(final ClientCallContext context, final List<String> extensions) {
+		return getAgentCard(context, extensions, null);
+	}
+	
+	/**
+	 * Retrieves the agent's card.
+	 * 
+	 * @param context
+	 * @param extensions
+	 * @return
+	 */
+	public abstract AgentCard getAgentCard(final ClientCallContext context, final List<String> extensions, final Consumer<AgentCard> signatureVerifier);
 	
 	/**
 	 * Attaches additional consumers to the {@link Client}.

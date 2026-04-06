@@ -66,7 +66,6 @@ import za.co.sindi.commons.net.sse.Event;
 import za.co.sindi.commons.net.sse.EventHandler;
 import za.co.sindi.commons.net.sse.MessageEvent;
 import za.co.sindi.commons.net.sse.SSEEventLineSubscriber;
-import za.co.sindi.commons.net.sse.SSEEventSubscriber;
 import za.co.sindi.commons.util.Either;
 import za.co.sindi.commons.utils.Preconditions;
 import za.co.sindi.commons.utils.Strings;
@@ -214,11 +213,11 @@ public class JsonRpcTransport implements ClientTransport {
 	}
 
 	@Override
-	public AgentCard getCard(ClientCallContext context, List<String> extensions) {
+	public AgentCard getCard(ClientCallContext context, List<String> extensions, Consumer<AgentCard> signatureVerifier) {
 		// TODO Auto-generated method stub
 		if (agentCard == null) {
 			A2ACardResolver resolver = new A2ACardResolver(httpClient, agentUrl);
-			agentCard = resolver.getAgentCard(null, getHttpArguments(context));
+			agentCard = resolver.getAgentCard(null, getHttpArguments(context), signatureVerifier);
 			if (agentCard.getSupportsAuthenticatedExtendedCard() != null) needsExtendedCard = agentCard.getSupportsAuthenticatedExtendedCard();
 		}
 		
@@ -229,6 +228,7 @@ public class JsonRpcTransport implements ClientTransport {
 		RequestPayloadAndKeywordArguments requestPayloadAndKeywordArguments = applyInterceptors(getAuthenticatedExtendedCardRequest.getRequestMethod(), getAuthenticatedExtendedCardRequest, modifiedKeywordArguments, context);
 		GetAuthenticatedExtendedCardSuccessResponse response = sendRequest(getAuthenticatedExtendedCardRequest, requestPayloadAndKeywordArguments.keywordArguments(), GetAuthenticatedExtendedCardSuccessResponse.class);
 		agentCard = response.getResult();
+		if (signatureVerifier != null) signatureVerifier.accept(agentCard);
 		needsExtendedCard = false;
 		return agentCard;
 	}

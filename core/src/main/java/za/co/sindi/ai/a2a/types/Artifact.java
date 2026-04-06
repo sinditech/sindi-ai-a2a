@@ -4,6 +4,7 @@
 package za.co.sindi.ai.a2a.types;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -70,6 +71,13 @@ public record Artifact(String artifactId, String name, String description, Part[
 		public Builder description(String description) {
 			this.description = description;
 			return this;
+		}
+		
+		/**
+		 * @param parts the parts to set
+		 */
+		public Builder parts(List<Part> parts) {
+			return parts(parts.toArray(new Part[parts.size()]));
 		}
 
 		/**

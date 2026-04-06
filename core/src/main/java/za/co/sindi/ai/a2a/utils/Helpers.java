@@ -3,25 +3,63 @@
  */
 package za.co.sindi.ai.a2a.utils;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.logging.Logger;
 
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonReader;
+import jakarta.json.bind.Jsonb;
+import jakarta.json.bind.JsonbBuilder;
+import za.co.sindi.ai.a2a.types.AgentCard;
 import za.co.sindi.ai.a2a.types.Artifact;
+import za.co.sindi.ai.a2a.types.MessageSendParams;
 import za.co.sindi.ai.a2a.types.Part;
 import za.co.sindi.ai.a2a.types.Task;
 import za.co.sindi.ai.a2a.types.TaskArtifactUpdateEvent;
+import za.co.sindi.ai.a2a.types.TaskState;
+import za.co.sindi.ai.a2a.types.TaskStatus;
+import za.co.sindi.ai.a2a.types.TextPart;
+import za.co.sindi.ai.a2a.utils.jcs.JsonCanonicalizer;
+import za.co.sindi.commons.utils.Strings;
 
 /**
  * @author Buhake Sindi
  * @since 27 October 2025
  */
-public class Helpers {
+public final class Helpers {
 	private static final Logger LOGGER = Logger.getLogger(Helpers.class.getName());
 	
 	private Helpers() {
 		throw new AssertionError("Private Constructor.");
+	}
+	
+	/**
+	 * Create a new task object from message send params.
+	 * <p />Generates UUIDs for task and context IDs if they are not already present in the message.
+	 * 
+	 * @param messageSendParams The {@link MessageSendParams} object containing the initial message.
+	 * @return A new {@link Task} object initialized with 'submitted' status and the input message in history.
+	 */
+	public static Task createTaskObject(final MessageSendParams messageSendParams) {
+		
+		if (Strings.isNullOrEmpty(messageSendParams.message().getContextId())) {
+			messageSendParams.message().setContextId(UUID.randomUUID().toString());
+		}
+		
+		return new Task.Builder()
+					   .id(UUID.randomUUID().toString())
+					   .contextId(messageSendParams.message().getContextId())
+					   .status(new TaskStatus(TaskState.SUBMITTED))
+					   .history(Arrays.asList(messageSendParams.message()))
+					   .build();
 	}
 	
 	/**
@@ -73,5 +111,46 @@ public class Helpers {
 		}
 		
 		task.setArtifacts(artifacts.toArray(new Artifact[artifacts.size()]));
+	}
+	
+	/**
+	 * Helper to create a text artifact.
+	 * 
+	 * @param text The text content for the artifact.
+	 * @param artifactId The ID for the artifact.
+	 * @return An {@link Artifact} object containing a single {@link TextPart}.
+	 */
+	public static Artifact buildTextArtifact(final String text, final String artifactId) {
+		
+		final TextPart textPart = new TextPart(text);
+		return new Artifact.Builder()
+				.artifactId(artifactId)
+				.parts(Arrays.asList(textPart))
+				.build();
+		
+	}
+	
+	public static String canonicalizeAgentCard(final AgentCard agentCard) {
+		Jsonb jsonb = JsonbBuilder.create();
+        String json = jsonb.toJson(agentCard);
+
+        // Remove "signatures" field before canonicalization
+        try (JsonReader reader = Json.createReader(new StringReader(json))) {
+            JsonObject obj = reader.readObject();
+            JsonObjectBuilder builder = Json.createObjectBuilder();
+            obj.entrySet().stream()
+                    .filter(entry -> !"signatures".equals(entry.getKey()))
+                    .forEach(entry -> builder.add(entry.getKey(), entry.getValue()));
+            JsonObject withoutSignatures = builder.build();
+
+            // Feed to JCS (the library guarantees RFC 8785 compliance)
+            try {
+				JsonCanonicalizer canonicalizer = new JsonCanonicalizer(withoutSignatures.toString());
+				return canonicalizer.getEncodedString();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				throw new UncheckedIOException(e);
+			} 
+        }
 	}
 }

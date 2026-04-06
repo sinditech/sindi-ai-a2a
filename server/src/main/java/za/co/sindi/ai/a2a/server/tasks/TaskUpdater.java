@@ -132,6 +132,15 @@ public class TaskUpdater {
 	 * Adds an artifact chunk to the task and publishes a {@link TaskArtifactUpdateEvent}.
 	 * 
 	 * @param parts A list of {@link Part} objects forming the artifact chunk.
+	 */
+	public void addArtifact(final List<Part> parts) {
+		addArtifact(parts, null, null, null, null, null, null);
+	}
+	
+	/**
+	 * Adds an artifact chunk to the task and publishes a {@link TaskArtifactUpdateEvent}.
+	 * 
+	 * @param parts A list of {@link Part} objects forming the artifact chunk.
 	 * @param artifactId The ID of the artifact. A new UUID is generated if not provided.
 	 * @param name Optional name for the artifact.
 	 * @param metadata Optional metadata for the artifact.
@@ -154,10 +163,26 @@ public class TaskUpdater {
 	/**
 	 * Marks the task as completed and publishes a final status update.
 	 * 
+	 */
+	public void complete() {
+		complete(null);
+	}
+	
+	/**
+	 * Marks the task as completed and publishes a final status update.
+	 * 
 	 * @param message
 	 */
 	public void complete(final Message message) {
 		updateStatus(TaskState.COMPLETED, message, true);
+	}
+	
+	/**
+	 * Marks the task as failed and publishes a final status update.
+	 * 
+	 */
+	public void failed() {
+		failed(null);
 	}
 	
 	/**
@@ -172,10 +197,26 @@ public class TaskUpdater {
 	/**
 	 * Marks the task as rejected and publishes a final status update.
 	 * 
+	 */
+	public void reject() {
+		reject(null);
+	}
+	
+	/**
+	 * Marks the task as rejected and publishes a final status update.
+	 * 
 	 * @param message
 	 */
 	public void reject(final Message message) {
-		updateStatus(TaskState.FAILED, message, true);
+		updateStatus(TaskState.REJECTED, message, true);
+	}
+	
+	/**
+	 * Marks the task as submitted and publishes a status update.
+	 * 
+	 */
+	public void submit() {
+		submit(null);
 	}
 	
 	/**
@@ -192,8 +233,25 @@ public class TaskUpdater {
 	 * 
 	 * @param message
 	 */
+	public void startWork() {
+		startWork(null);
+	}
+	
+	/**
+	 * "Marks the task as working and publishes a status update.
+	 * 
+	 * @param message
+	 */
 	public void startWork(final Message message) {
 		updateStatus(TaskState.WORKING, message);
+	}
+	
+	/**
+	 * Marks the task as cancelled and publishes a final status update.
+	 * 
+	 */
+	public void cancel() {
+		cancel(null);
 	}
 	
 	/**
@@ -203,6 +261,14 @@ public class TaskUpdater {
 	 */
 	public void cancel(final Message message) {
 		updateStatus(TaskState.CANCELED, message, true);
+	}
+	
+	/**
+	 * Marks the task as input required and publishes a status update.
+	 * 
+	 */
+	public void requiresInput() {
+		requiresInput(null);
 	}
 	
 	/**
@@ -221,7 +287,15 @@ public class TaskUpdater {
 	 * @param isFinal
 	 */
 	public void requiresInput(final Message message, final boolean isFinal) {
-		updateStatus(TaskState.CANCELED, message, isFinal);
+		updateStatus(TaskState.INPUT_REQUIRED, message, isFinal);
+	}
+	
+	/**
+	 * Marks the task as auth required and publishes a status update.
+	 * 
+	 */
+	public void requiresAuth() {
+		requiresAuth(null);
 	}
 	
 	/**

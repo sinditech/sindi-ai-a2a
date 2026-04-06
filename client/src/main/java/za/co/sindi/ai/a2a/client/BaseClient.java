@@ -149,9 +149,9 @@ public class BaseClient extends Client {
      * client's internal state with the new card.
 	 */
 	@Override
-	public AgentCard getAgentCard(ClientCallContext context, final List<String> extensions) {
+	public AgentCard getAgentCard(ClientCallContext context, List<String> extensions, Consumer<AgentCard> signatureVerifier) {
 		// TODO Auto-generated method stub
-		this.card = transport.getCard(context, extensions);
+		this.card = transport.getCard(context, extensions, signatureVerifier);
 		return this.card;
 	}
 

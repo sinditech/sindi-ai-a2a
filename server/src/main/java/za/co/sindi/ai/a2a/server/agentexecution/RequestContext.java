@@ -113,6 +113,25 @@ public class RequestContext {
 		}
 	}
 	
+	/**
+	 * Extracts text content from the user's message parts.
+	 * 
+	 * @return  A single string containing all text content from the user message,
+ 	 *          joined by the delimiter "\n". Returns an empty string if no
+	 *          user message is present or if it contains no text parts.
+	 */
+	public String getUserInput() {
+		return getUserInput("\n");
+	}
+	
+	/**
+	 * Extracts text content from the user's message parts.
+	 * 
+	 * @param delimiter The string to use when joining multiple text parts.
+	 * @return  A single string containing all text content from the user message,
+ 	 *          joined by the specified delimiter. Returns an empty string if no
+	 *          user message is present or if it contains no text parts.
+	 */
 	public String getUserInput(final String delimiter) {
 		if (params == null) return "";
 		
@@ -213,6 +232,7 @@ public class RequestContext {
 			this.relatedTasks = relatedTasks;
 			return this;
 		}
+		
 		/**
 		 * @param taskId the taskId to set
 		 */
@@ -228,6 +248,7 @@ public class RequestContext {
 			this.contextId = contextId;
 			return this;
 		}
+		
 		/**
 		 * @param callContext the callContext to set
 		 */

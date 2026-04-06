@@ -99,9 +99,10 @@ public interface ClientTransport extends AutoCloseable {
 	 * 
 	 * @param context
 	 * @param extensions
+	 * @param signatureVerifier
 	 * @return
 	 */
-	public AgentCard getCard(final ClientCallContext context, final List<String> extensions);
+	public AgentCard getCard(final ClientCallContext context, final List<String> extensions, final Consumer<AgentCard> signatureVerifier);
 	
 	/**
 	 * Closes the transport.

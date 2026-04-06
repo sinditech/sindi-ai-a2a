@@ -88,7 +88,7 @@ jobs:
           # Create changelog entry
           CHANGELOG_ENTRY="## [$VERSION] - $(date +%Y-%m-%d)\n$COMMITS\n"
           
-          echo "$CHANGELOG_ENTRY" > new_changelog.txt
+          echo -e "$CHANGELOG_ENTRY" > new_changelog.txt
           
           # Save for GitHub output (truncate if too long)
           echo "changelog<<EOF" >> $GITHUB_OUTPUT

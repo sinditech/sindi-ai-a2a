@@ -179,11 +179,11 @@ public class RestTransport implements ClientTransport {
 	}
 
 	@Override
-	public AgentCard getCard(ClientCallContext context, List<String> extensions) {
+	public AgentCard getCard(ClientCallContext context, List<String> extensions, Consumer<AgentCard> signatureVerifier) {
 		// TODO Auto-generated method stub
 		if (agentCard == null) {
 			A2ACardResolver resolver = new A2ACardResolver(httpClient, agentUrl);
-			agentCard = resolver.getAgentCard(null, getHttpArguments(context));
+			agentCard = resolver.getAgentCard(null, getHttpArguments(context), signatureVerifier);
 			if (agentCard.getSupportsAuthenticatedExtendedCard() != null) needsExtendedCard = agentCard.getSupportsAuthenticatedExtendedCard();
 		}
 		
@@ -192,6 +192,7 @@ public class RestTransport implements ClientTransport {
 		Map<String, Object> modifiedKeywordArguments = A2AExtensions.updateExtensionHeader(getHttpArguments(context), extensions != null && !extensions.isEmpty() ? extensions : this.extensions);
 		RequestPayloadAndKeywordArguments requestPayloadAndKeywordArguments = applyInterceptors(null, modifiedKeywordArguments, context);
 		agentCard = sendGetRequest("/v1/card", null, requestPayloadAndKeywordArguments.keywordArguments(), AgentCard.class);
+		if (signatureVerifier != null) signatureVerifier.accept(agentCard);
 		needsExtendedCard = false;
 		return agentCard;
 	}

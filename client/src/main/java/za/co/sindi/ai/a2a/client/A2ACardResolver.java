@@ -12,6 +12,7 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -52,24 +53,24 @@ public class A2ACardResolver {
 	}
 	
 	/**
-	 * Fetches an agent card from a specified path relative to the base_url.
+	 * Fetches an agent card from a specified path relative to the base url.
 	 * 
 	 * @return An {@link AgentCard} object representing the agent's capabilities.
 	 * @throws A2AClientHTTPError If an HTTP error occurs during the request.
 	 * @throws A2AClientJSONError If the response body cannot be decoded as JSON or validated against the {@link AgentCard} schema.
 	 */
 	public AgentCard getAgentCard() {
-		return getAgentCard(null, null);
+		return getAgentCard(null, null, null);
 	}
 	
 	/**
-	 * Fetches an agent card from a specified path relative to the base_url.
+	 * Fetches an agent card from a specified path relative to the base url.
 	 * 
 	 * @return An {@link AgentCard} object representing the agent's capabilities.
 	 * @throws A2AClientHTTPError If an HTTP error occurs during the request.
 	 * @throws A2AClientJSONError If the response body cannot be decoded as JSON or validated against the {@link AgentCard} schema.
 	 */
-	public AgentCard getAgentCard(final String relativeCardPath, final Map<String, Object> httpKeywordArguments) {
+	public AgentCard getAgentCard(final String relativeCardPath, final Map<String, Object> httpKeywordArguments, final Consumer<AgentCard> signatureVerifier) {
 		String pathSegment = relativeCardPath == null ? agentCardPath : relativeCardPath.replaceAll("/+$", "");
 		String targetUrl = baseUrl + "/" + pathSegment;
 		
@@ -93,6 +94,7 @@ public class A2ACardResolver {
 		try {
 			HttpResponse<String> response = httpClient.send(httpRequestBuilder.build(), BodyHandlers.ofString());
 			AgentCard agentCard = JsonUtils.unmarshall(response.body(), AgentCard.class);
+			if (signatureVerifier != null) signatureVerifier.accept(agentCard);
 			LOGGER.info(String.format("Successfully fetched agent card data from %s: %s", targetUrl, agentCard.getName()));
 			return agentCard;
 		} catch (IOException | InterruptedException e) {

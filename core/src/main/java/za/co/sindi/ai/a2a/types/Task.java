@@ -187,6 +187,13 @@ public final class Task implements Kind, StreamingKind, Event {
 		}
 
 		/**
+		 * @param artifacts the artifacts to set
+		 */
+		public Builder artifacts(List<Artifact> artifacts) {
+			return artifacts(artifacts.toArray(new Artifact[artifacts.size()]));
+		}
+		
+		/**
 		 * @param metadata the metadata to set
 		 */
 		public Builder metadata(Map<String, Object> metadata) {
