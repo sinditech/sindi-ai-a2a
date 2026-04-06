@@ -110,7 +110,7 @@ public class TaskUpdater {
 	private void updateStatus(final TaskState state, final Message message, final boolean isFinal, final Map<String, Object> metadata, final Instant timestamp) {
 		lock.lock();
 		try {
-			Preconditions.checkState(terminalStateReached.get(), "Task " + taskId + " is already in a terminal state.");
+			Preconditions.checkState(!terminalStateReached.get(), "Task " + taskId + " is already in a terminal state.");
 			boolean _final = isFinal;
 			if (TERMINAL_STATES.contains(state)) {
 				_final = true;
