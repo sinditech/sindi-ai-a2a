@@ -27,7 +27,7 @@ public class JsonRequestIdSerialization implements JsonbSerializer<RequestId>, J
 			if (parser.isIntegralNumber()) {
 				id = RequestId.of(parser.getLong());
 			}
-		} catch (IllegalStateException e) {
+		} catch (Exception e) { //FIXME: Using Exception because Yasson throws a JsonbException instead of IllegalStateException, as per spec.
 			id = RequestId.of(parser.getString());
 		}
 		

@@ -17,14 +17,12 @@ public final class ListTasksRequest extends JSONRPCRequest<ListTasksParams> impl
 	/**
 	 * @param jsonrpc
 	 * @param id
-	 * @param method
 	 * @param params
 	 */
 	@JsonbCreator
-	public ListTasksRequest(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id, @JsonbProperty("method") String method, @JsonbProperty("params") ListTasksParams params) {
-		super(jsonrpc, id, method, params);
+	public ListTasksRequest(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id, @JsonbProperty("params") ListTasksParams params) {
+		super(jsonrpc, id, DEFAULT_METHOD, params);
 		// TODO Auto-generated constructor stub
-		if (!DEFAULT_METHOD.equals(method)) throw new IllegalArgumentException("Invalid " + this.getClass().getSimpleName() + " method.");
 	}
 
 	/**
@@ -32,7 +30,7 @@ public final class ListTasksRequest extends JSONRPCRequest<ListTasksParams> impl
 	 * @param params
 	 */
 	public ListTasksRequest(RequestId id, ListTasksParams params) {
-		this(JSONRPCVersion.getLatest(), id, DEFAULT_METHOD, params);
+		this(JSONRPCVersion.getLatest(), id, params);
 		// TODO Auto-generated constructor stub
 	}
 }

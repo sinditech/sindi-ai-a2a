@@ -152,7 +152,7 @@ public class TaskUpdater {
 		String _artifactId = artifactId;
 		if (artifactId == null || artifactId.isEmpty()) _artifactId = artifactIdGenerator.generateId(new IDGeneratorContext(this.taskId, this.contextId));
 		try {
-			eventQueue.enqueueEvent(new TaskArtifactUpdateEvent(taskId, contextId, new Artifact(_artifactId, null, null, parts == null ? null : parts.toArray(new Part[parts.size()]), metadata, extensions == null ? null : extensions.toArray(new String[extensions.size()])), append, lastChunk, metadata));
+			eventQueue.enqueueEvent(new TaskArtifactUpdateEvent(taskId, contextId, new Artifact(_artifactId, name, null, parts == null ? null : parts.toArray(new Part[parts.size()]), metadata, extensions == null ? null : extensions.toArray(new String[extensions.size()])), append, lastChunk, metadata));
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			Thread.currentThread().interrupt();

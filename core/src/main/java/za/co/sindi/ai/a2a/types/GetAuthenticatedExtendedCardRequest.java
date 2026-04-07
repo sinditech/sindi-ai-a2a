@@ -17,20 +17,18 @@ public final class GetAuthenticatedExtendedCardRequest extends JSONRPCRequest<Ob
 	/**
 	 * @param jsonrpc
 	 * @param id
-	 * @param method
 	 */
 	@JsonbCreator
-	public GetAuthenticatedExtendedCardRequest(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id, @JsonbProperty("method") String method) {
-		super(jsonrpc, id, method, null);
+	public GetAuthenticatedExtendedCardRequest(@JsonbProperty("jsonrpc") JSONRPCVersion jsonrpc, @JsonbProperty("id") RequestId id) {
+		super(jsonrpc, id, DEFAULT_METHOD, null);
 		// TODO Auto-generated constructor stub
-		if (!DEFAULT_METHOD.equals(method)) throw new IllegalArgumentException("Invalid " + this.getClass().getSimpleName() + " method.");
 	}
 
 	/**
 	 * @param id
 	 */
 	public GetAuthenticatedExtendedCardRequest(RequestId id) {
-		this(JSONRPCVersion.getLatest(), id, DEFAULT_METHOD);
+		this(JSONRPCVersion.getLatest(), id);
 		// TODO Auto-generated constructor stub
 	}
 }
