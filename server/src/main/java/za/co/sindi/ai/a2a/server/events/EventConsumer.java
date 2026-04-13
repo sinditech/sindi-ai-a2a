@@ -4,12 +4,12 @@
 package za.co.sindi.ai.a2a.server.events;
 
 import java.util.Objects;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.Flow;
 import java.util.concurrent.Flow.Publisher;
-import java.util.concurrent.Flow.Subscriber;
-import java.util.concurrent.FutureTask;
+import java.util.concurrent.Flow.Subscription;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -86,27 +86,96 @@ public class EventConsumer {
         
 		return subscriber -> {
 			// Create a subscription that allows cancellation
-            subscriber.onSubscribe(new Flow.Subscription() {
-                private volatile boolean cancelled = false;
+            subscriber.onSubscribe(new Subscription() {
+                private final AtomicLong demand = new AtomicLong(0);
+                private final AtomicBoolean cancelled = new AtomicBoolean();
                 
                 @Override
                 public void request(long n) {
                     // Backpressure is handled internally by the queue blocking
-                    if (n <= 0 && !cancelled) {
+                    if (n <= 0) {
                         subscriber.onError(new IllegalArgumentException(
                             "Request must be positive, was: " + n));
                     }
                     
-                    if (cancelled) return ;
-                    consumeAll(subscriber);
+                    if (cancelled.get()) return ;
+                    
+                    // Safely add demand, guarding against Long overflow
+                    demand.updateAndGet(current -> {
+                        long newDemand = current + n;
+                        return newDemand < 0 ? Long.MAX_VALUE : newDemand; 
+                    });
+                    
+                    consumeAll();
                 }
                 
                 @Override
                 public void cancel() {
-                	if (!cancelled) {
+                	if (cancelled.compareAndSet(false, true)) {
                 		LOGGER.fine("Subscription cancelled.");
-                		cancelled = true;
                 	}
+                }
+                
+                private void consumeAll() {
+            		LOGGER.fine("Event pump started");
+            		
+            		while (true) {
+            			if (cancelled.get()) {
+            				LOGGER.log(Level.FINE, "EventConsumer detected cancellation, exiting polling loop for queue " + System.identityHashCode(queue));
+            				subscriber.onComplete();
+            				break ;
+            			}
+            			
+                        if (exception != null) {
+                        	LOGGER.log(Level.SEVERE, "Agent task exception detected", exception);
+                        	subscriber.onError(exception);
+//                        	throw new CompletionException(exception);
+                        	break ;
+                        }
+
+                        try {
+                            Event event = queue.dequeueEvent(timeoutMillis, TimeUnit.MILLISECONDS);
+                            if (event == null) continue;
+                            queue.taskDone();
+                            LOGGER.fine("Dequeued event of type: " + event.getClass().getSimpleName());
+
+                            boolean isFinal = isFinalEvent(event);
+                            if (isFinal) {
+                            	LOGGER.fine("Stopping event consumption in consumeAll.");
+                                queue.close(true);
+                                subscriber.onNext(event);
+                                subscriber.onComplete();
+                                break;
+                            }
+                            
+                            subscriber.onNext(event);
+                            demand.decrementAndGet();
+                        } catch (InterruptedException e) {
+                        	Thread.currentThread().interrupt();
+                        	continue;
+                        } catch (QueueClosedException | QueueEmptyException e) {
+                            if (queue.isClosed() || queue.isEmpty()) {
+                            	subscriber.onComplete();
+                            	break;
+                            }
+                        } catch (Exception e) {
+            	        	LOGGER.severe("Stopping event consumption due to an exception.");
+            	            exception = e;
+            	            continue;
+            	        } 
+                    }
+            	}
+                
+                private boolean isFinalEvent(Event event) {
+                    if (event instanceof TaskStatusUpdateEvent tsue && tsue.isFinal()) return true;
+                    if (event instanceof Message) return true;
+                    if (event instanceof Task task) {
+                        return switch (task.getStatus().state()) {
+                            case COMPLETED, CANCELED, FAILED, REJECTED, UNKNOWN, INPUT_REQUIRED -> true;
+                            default -> false;
+                        };
+                    }
+                    return false;
                 }
             });
 		};
@@ -120,7 +189,7 @@ public class EventConsumer {
      * 
 	 * @param agentTask the task that completed.
 	 */
-	public void agentTaskCallback(FutureTask<?> agentTask) {
+	public void agentTaskCallback(Future<?> agentTask) {
 		LOGGER.fine("Agent task callback triggered.");
         if (!agentTask.isCancelled() && agentTask.isDone()) {
 //            try {
@@ -131,56 +200,4 @@ public class EventConsumer {
         	this.exception = agentTask.exceptionNow();
         }
     }
-
-	private boolean isFinalEvent(Event event) {
-        if (event instanceof TaskStatusUpdateEvent tsue && tsue.isFinal()) return true;
-        if (event instanceof Message) return true;
-        if (event instanceof Task task) {
-            return switch (task.getStatus().state()) {
-                case COMPLETED, CANCELED, FAILED, REJECTED, UNKNOWN, INPUT_REQUIRED -> true;
-                default -> false;
-            };
-        }
-        return false;
-    }
-	
-	private void consumeAll(Subscriber<? super Event> subscriber) {
-		LOGGER.fine("Event pump started");
-		
-		while (true) {
-            if (exception != null) {
-            	LOGGER.log(Level.SEVERE, "Agent task exception detected", exception);
-            	subscriber.onError(exception);
-            	throw new CompletionException(exception);
-            }
-
-            try {
-                Event event = queue.dequeueEvent(timeoutMillis, TimeUnit.MILLISECONDS);
-                queue.taskDone();
-                LOGGER.fine("Dequeued event of type: " + event.getClass().getSimpleName());
-
-                boolean isFinal = isFinalEvent(event);
-                subscriber.onNext(event);
-
-                if (isFinal) {
-                	LOGGER.fine("Stopping event consumption in consumeAll.");
-                    queue.close(true);
-                    subscriber.onComplete();
-                    break;
-                }
-            } catch (IllegalStateException | InterruptedException e) {
-            	if (e instanceof InterruptedException) Thread.currentThread().interrupt();
-            	continue;
-            } catch (QueueClosedException | QueueEmptyException e) {
-                if (queue.isClosed() || queue.isEmpty()) {
-                	subscriber.onComplete();
-                	break;
-                }
-            } catch (Exception e) {
-	        	LOGGER.severe("Stopping event consumption due to an exception.");
-	            exception = e;
-	            continue;
-	        } 
-        }
-	}
 }

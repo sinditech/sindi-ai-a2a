@@ -4,8 +4,10 @@
 package za.co.sindi.ai.a2a.server.tasks;
 
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Flow.Publisher;
+import java.util.concurrent.Flow.Subscriber;
+import java.util.concurrent.Flow.Subscription;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
@@ -19,7 +21,6 @@ import za.co.sindi.ai.a2a.types.Task;
 import za.co.sindi.ai.a2a.types.TaskState;
 import za.co.sindi.ai.a2a.types.TaskStatusUpdateEvent;
 import za.co.sindi.commons.concurrent.ConsumingSubscriber;
-import za.co.sindi.commons.concurrent.TransformingPublisher;
 
 /**
  * ResultAggregator is used to process the event streams from an {@link AgentExecutor}.<p />
@@ -89,12 +90,39 @@ public class ResultAggregator {
 	 * @param consumer The {@link EventConsumer} to read events from.
 	 * @return  The {@link Event} objects consumed from the {@link EventConsumer}.
 	 */
-	@SuppressWarnings({ })
 	public Publisher<Event> consumeAndEmit(final EventConsumer consumer) {
-		Publisher<Event> all = consumer.consumeAll();
-		return new TransformingPublisher<Event, Event>(all, (event) -> {
-			return taskManager.process(event);
-		});
+		return subscriber -> {
+			consumer.consumeAll().subscribe(new Subscriber<>() {
+                private Subscription subscription;
+                
+				@Override
+				public void onSubscribe(Subscription subscription) {
+					// TODO Auto-generated method stub
+					this.subscription = subscription;
+					subscription.request(1L);
+				}
+
+				@Override
+				public void onNext(Event event) {
+					// TODO Auto-generated method stub
+					taskManager.process(event);
+					subscriber.onNext(event);
+					subscription.request(1L);
+				}
+
+				@Override
+				public void onError(Throwable throwable) {
+					// TODO Auto-generated method stub
+					subscriber.onError(throwable);
+				}
+
+				@Override
+				public void onComplete() {
+					// TODO Auto-generated method stub
+					subscriber.onComplete();
+				}
+			});
+		};
 	}
 	
 	/**
@@ -103,22 +131,44 @@ public class ResultAggregator {
 	 * @return The final {@link Task} object or {@link Message} object after the stream is exhausted.
             Returns <code>null</code> if the stream ends without producing a final result.
 	 */
-	@SuppressWarnings({ })
 	public Event consumeAll(final EventConsumer consumer) {
 		final AtomicReference<Event> returnEvent = new AtomicReference<>();
-		Publisher<Event> all = consumer.consumeAll();
-		all.subscribe(new ConsumingSubscriber<Event>((subscriber, event) -> {
+		consumer.consumeAll().subscribe(new ConsumingSubscriber<>((event) -> {
 			if (event instanceof Message message) {
-				this.message = message;
-				if (returnEvent.get() == null) {
-					returnEvent.set((Event)event);
-					subscriber.onComplete();
-					return ;
-				}
-			}
-				
-			taskManager.process(event);
+				ResultAggregator.this.message = message;
+				returnEvent.set(message);
+			} else taskManager.process(event);
 		}));
+//		consumer.consumeAll().subscribe(new Subscriber<>() {
+//            private Subscription subscription;
+//            
+//			@Override
+//			public void onSubscribe(Subscription subscription) {
+//				// TODO Auto-generated method stub
+//				this.subscription = subscription;
+//				subscription.request(1L);
+//			}
+//
+//			@Override
+//			public void onNext(Event event) {
+//				// TODO Auto-generated method stub
+//				if (event instanceof Message message) {
+//					ResultAggregator.this.message = message;
+//					returnEvent.set(message);
+//				} else taskManager.process(event);
+//				subscription.request(1L);
+//			}
+//
+//			@Override
+//			public void onError(Throwable throwable) {
+//				// TODO Auto-generated method stub
+//			}
+//
+//			@Override
+//			public void onComplete() {
+//				// TODO Auto-generated method stub
+//			}
+//		});
 		
 		if (returnEvent.get() != null) {
 			return returnEvent.get();
@@ -146,43 +196,70 @@ public class ResultAggregator {
 		Publisher<Event> all = consumer.consumeAll();
 		final AtomicBoolean interrupted = new AtomicBoolean(false);
 		final AtomicReference<EventInterrupt> returnEventInterrupt = new AtomicReference<>();
+		final AtomicReference<FutureTask<Void>> backgroundTask = new AtomicReference<>();
 		
-		all.subscribe(new ConsumingSubscriber<Event>((subscriber, event) -> {
-			if (event instanceof Message message) {
-				this.message = message;
-				if (returnEventInterrupt.get() == null) {
-					returnEventInterrupt.set(new EventInterrupt(message, false));
-					subscriber.onComplete();
+		all.subscribe(new Subscriber<>() {
+			private Subscription subscription;
+			
+			@Override
+			public void onSubscribe(Subscription subscription) {
+				// TODO Auto-generated method stub
+				this.subscription = subscription;
+				subscription.request(1L);
+			}
+
+			@Override
+			public void onNext(Event event) {
+				// TODO Auto-generated method stub
+				if (event instanceof Message message) {
+					ResultAggregator.this.message = message;
+					returnEventInterrupt.set(new EventInterrupt(message, false, null));
+					subscription.cancel();
 					return ;
 				}
+				
+				taskManager.process(event);
+				
+				boolean shouldInterrupt = false;
+				boolean isAuthRequired = (event instanceof Task task && task.getStatus().state() == TaskState.AUTH_REQUIRED)
+	                    || (event instanceof TaskStatusUpdateEvent tsue && tsue.getStatus().state() == TaskState.AUTH_REQUIRED);
+				
+				if (isAuthRequired) {
+					LOGGER.fine("Encountered an auth-required task: breaking synchronous message/send flow.");
+					shouldInterrupt = true;
+				} else if (!blocking) {
+					LOGGER.fine("Non-blocking call: returning task after first event.");
+					shouldInterrupt = true;
+				}
+				
+				if (shouldInterrupt) {
+					// Continue consuming the rest of the events in the background.
+					backgroundTask.set(new FutureTask<>(() -> continueConsuming(all, eventCallback), null));
+//					CompletableFuture.runAsync(() -> continueConsuming(all, eventCallback));
+					interrupted.set(true);
+					subscription.cancel();
+					return ;
+				} 
+				
+				subscription.request(1L);
 			}
-			
-			taskManager.process((Event) event);
-			
-			boolean shouldInterrupt = false;
-			boolean isAuthRequired = (event instanceof Task task && task.getStatus().state() == TaskState.AUTH_REQUIRED)
-                    || (event instanceof TaskStatusUpdateEvent tsue && tsue.getStatus().state() == TaskState.AUTH_REQUIRED);
-			
-			if (isAuthRequired) {
-				LOGGER.fine("Encountered an auth-required task: breaking synchronous message/send flow.");
-				shouldInterrupt = true;
-			} else if (!blocking) {
-				LOGGER.fine("Non-blocking call: returning task after first event.");
-				shouldInterrupt = true;
+
+			@Override
+			public void onError(Throwable throwable) {
+				// TODO Auto-generated method stub
 			}
-			
-			if (shouldInterrupt) {
-				// Continue consuming the rest of the events in the background.
-				CompletableFuture.runAsync(() -> continueConsuming(all, eventCallback));
-				interrupted.set(true);
+
+			@Override
+			public void onComplete() {
+				// TODO Auto-generated method stub
 			}
-		}));
+		});
 		
 		if (returnEventInterrupt.get() != null) {
 			return returnEventInterrupt.get();
 		}
 		
-		return new EventInterrupt(taskManager.getTask(), interrupted.get());
+		return new EventInterrupt(taskManager.getTask(), interrupted.get(), backgroundTask.get());
 	}
 	
 	/**
@@ -192,11 +269,41 @@ public class ResultAggregator {
 	 * @param eventCallback Optional async callback function to be called after each event is processed.
 	 */
 	private void continueConsuming(final Publisher<Event> eventPublisher, final Runnable eventCallback) {
-		eventPublisher.subscribe(new ConsumingSubscriber<Event>((_, event) -> {
+		eventPublisher.subscribe(new ConsumingSubscriber<>((event) -> {
 			taskManager.process(event);
 			if (eventCallback != null) eventCallback.run();
 		}));
+//		eventPublisher.subscribe(new Subscriber<>() {
+//			private Subscription subscription;
+//			
+//			@Override
+//			public void onSubscribe(Subscription subscription) {
+//				// TODO Auto-generated method stub
+//				this.subscription = subscription;
+//				subscription.request(1L);
+//			}
+//
+//			@Override
+//			public void onNext(Event event) {
+//				// TODO Auto-generated method stub
+//				taskManager.process(event);
+//				if (eventCallback != null) {
+//					eventCallback.run();
+//				}
+//				subscription.request(1L);
+//			}
+//
+//			@Override
+//			public void onError(Throwable throwable) {
+//				// TODO Auto-generated method stub
+//			}
+//
+//			@Override
+//			public void onComplete() {
+//				// TODO Auto-generated method stub
+//			}
+//		});
 	}
 	
-	public static final record EventInterrupt(Kind result, boolean interrupted) {}
+	public static final record EventInterrupt(Kind result, boolean interrupted, FutureTask<Void> backgroundTask) {}
 }
