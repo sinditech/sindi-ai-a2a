@@ -229,9 +229,8 @@ public class TaskUpdater {
 	}
 	
 	/**
-	 * "Marks the task as working and publishes a status update.
+	 * Marks the task as working and publishes a status update.
 	 * 
-	 * @param message
 	 */
 	public void startWork() {
 		startWork(null);

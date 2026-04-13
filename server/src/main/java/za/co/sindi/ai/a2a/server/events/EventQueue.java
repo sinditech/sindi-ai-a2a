@@ -127,7 +127,7 @@ public class EventQueue implements AutoCloseable {
     public Event dequeueEvent(boolean noWait) throws InterruptedException, QueueClosedException, QueueEmptyException {
         lock.lock();
         try {
-            if (isClosed && queue.isEmpty()) {
+        	if (isClosed && queue.isEmpty()) {
                 LOGGER.warning("Queue is closed. Event will not be dequeued.");
                 throw new QueueClosedException("Queue is closed.");
             }
@@ -136,13 +136,11 @@ public class EventQueue implements AutoCloseable {
         }
 
         if (noWait) {
-            LOGGER.fine("Attempting to dequeue event (no_wait=true).");
+            LOGGER.fine("Attempting to dequeue event (no-wait=true).");
             Event event = queue.poll();
-            if (event == null) {
-            	LOGGER.warning("Queue is empty. Event will not be dequeued.");
-            	throw new QueueEmptyException("Queue is empty.");
+            if (event != null) {
+            	 LOGGER.fine("Dequeued event (no-wait=true) of type: " + event.getClass().getSimpleName());
             }
-            LOGGER.fine("Dequeued event (noWait=true) of type: " + event.getClass().getSimpleName());
             return event;
         }
 
@@ -178,21 +176,17 @@ public class EventQueue implements AutoCloseable {
         if (timeout <= 0) {
             LOGGER.fine("Attempting to dequeue event.");
             Event event = queue.poll();
-            if (event == null) {
-            	LOGGER.warning("Queue is empty. Event will not be dequeued.");
-            	throw new QueueEmptyException("Queue is empty.");
+            if (event != null) {
+            	LOGGER.fine("Dequeued event (timeout=" + timeout + ") of type: " + event.getClass().getSimpleName());
             }
-            LOGGER.fine("Dequeued event (timeout=" + timeout + ") of type: " + event.getClass().getSimpleName());
             return event;
         }
 
         LOGGER.fine("Attempting to dequeue event (waiting).");
         Event event = queue.poll(timeout, unit);
-        if (event == null) {
-        	LOGGER.warning("Queue is empty. Event will not be dequeued.");
-        	throw new QueueEmptyException("Queue is empty.");
+        if (event != null) {
+        	LOGGER.fine("Dequeued event (waited) of type: " + event.getClass().getSimpleName());
         }
-        LOGGER.fine("Dequeued event (waited) of type: " + event.getClass().getSimpleName());
         return event;
     }
 

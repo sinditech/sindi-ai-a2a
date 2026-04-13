@@ -9,17 +9,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Flow.Publisher;
-import java.util.concurrent.FutureTask;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import za.co.sindi.ai.a2a.server.A2AServerError;
@@ -56,7 +52,6 @@ import za.co.sindi.ai.a2a.types.TaskQueryParams;
 import za.co.sindi.ai.a2a.types.TaskState;
 import za.co.sindi.ai.a2a.types.UnsupportedOperationError;
 import za.co.sindi.ai.a2a.utils.Tasks;
-import za.co.sindi.commons.concurrent.CancellablePublisher;
 import za.co.sindi.commons.concurrent.TransformingPublisher;
 
 /**
@@ -80,8 +75,8 @@ public class DefaultRequestHandler implements RequestHandler {
 	private final PushNotificationConfigStore pushConfigStore;
 	private final PushNotificationSender pushSender;
 	private final RequestContextBuilder requestContextBuilder;
-	private final Map<String, FutureTask<Void>> runningAgents;
-	private final Set<FutureTask<Void>> backgroundTasks;
+	private final Map<String, CompletableFuture<Void>> runningAgents;
+	private final Set<CompletableFuture<Void>> backgroundTasks;
 	private ExecutorService executor;
 	
 	/**
@@ -203,25 +198,29 @@ public class DefaultRequestHandler implements RequestHandler {
 		// TODO Auto-generated method stub
 		MessageExecution execution = setupMessageExecution(params, context);
 		EventConsumer consumer = new EventConsumer(execution.queue());
-		execution.producerTask().addDoneCallback(agentTask -> consumer.agentTaskCallback(agentTask));
+		CompletableFuture<Void> producerTask = execution.producerTask();
+		producerTask.whenComplete((_, _) -> consumer.agentTaskCallback(producerTask));
 		
 		boolean blocking = true;
 		if (params.configuration() != null && params.configuration().blocking() != null && Boolean.FALSE.equals(params.configuration().blocking())) blocking = false;
 		
 		EventInterrupt eventInterrupt = null;
 		try {
+			producerTask.get();
 			Runnable pushNotificationCallback = () -> sendPushNotificationIfNeeded(execution.taskId(), execution.resultAggregator());
 			eventInterrupt = execution.resultAggregator().consumeAndBreakOnInterrupt(consumer, blocking, pushNotificationCallback);
-			
+		} catch (Exception e) {
+			LOGGER.log(Level.SEVERE, "Agent Execution failed.");
+			producerTask.cancel(true);
+			throw new A2AServerError(new InternalError(e.getLocalizedMessage()));
 		} finally {
 			if (eventInterrupt != null && eventInterrupt.interrupted())  {
-				FutureTaskWithDoneCallbacks<Void> cleanupTask = new FutureTaskWithDoneCallbacks<>(() -> {
-					return cleanupProducer(execution.taskId(), execution.producerTask()).join();
-				});
-				cleanupTask.setName("cleanup_producer:" + execution.taskId());
+				CompletableFuture<Void> cleanupTask = cleanupProducer(execution.taskId(), producerTask);
+//				cleanupTask.setName("cleanup_producer:" + execution.taskId());
 				trackBackgroundTask(cleanupTask);
-				executor.submit(cleanupTask);
-			} else cleanupProducer(execution.taskId(), execution.producerTask()).join();
+//				executor.submit(cleanupTask);
+				cleanupTask.join();
+			} else cleanupProducer(execution.taskId(), producerTask).join();
 		}
 		
 		Kind result = eventInterrupt == null ? null : eventInterrupt.result();
@@ -248,39 +247,37 @@ public class DefaultRequestHandler implements RequestHandler {
 		// TODO Auto-generated method stub
 		MessageExecution execution = setupMessageExecution(params, context);
 		EventConsumer consumer = new EventConsumer(execution.queue());
-		execution.producerTask().addDoneCallback(agentTask -> consumer.agentTaskCallback(agentTask));
+		CompletableFuture<Void> producerTask = execution.producerTask();
+		producerTask.whenComplete((_, _) -> consumer.agentTaskCallback(producerTask));
 		
+		Publisher<Event> results = null;
 		try {
-			Runnable cancel = () -> {
-				FutureTaskWithDoneCallbacks<Void> backgroundTask = new FutureTaskWithDoneCallbacks<>(() -> {
-					execution.resultAggregator.consumeAll(consumer);
-					return null;
-				});
-				backgroundTask.setName("background_consume:" + execution.taskId());
-				trackBackgroundTask(backgroundTask);
-				executor.submit(backgroundTask);
-			};
+			producerTask.join();
 			
-			Function<Event, Event> accept = (event) -> {
+			results = execution.resultAggregator().consumeAndEmit(consumer);
+			results = new TransformingPublisher<Event, Event>(results, (event) -> {
 				if (event instanceof Task task) validateTaskIdMatch(execution.taskId(), task.getId());
 
 				sendPushNotificationIfNeeded(execution.taskId(), execution.resultAggregator());
 				
 				return event;
-			};
-			
-			Publisher<Event> results = execution.resultAggregator().consumeAndEmit(consumer);
-			results = new TransformingPublisher<Event, Event>(results, accept);
-			results = new CancellablePublisher<Event>(results, cancel);
-			return results;
-		} finally {
-			FutureTaskWithDoneCallbacks<Void> cleanupTask = new FutureTaskWithDoneCallbacks<>(() -> {
-				return cleanupProducer(execution.taskId(), execution.producerTask()).join();
 			});
-			cleanupTask.setName("cleanup_producer:" + execution.taskId());
+		} catch(CancellationException e) {
+			CompletableFuture<Void> backgroundTask = CompletableFuture.runAsync(() -> {
+				execution.resultAggregator.consumeAll(consumer);
+			}, executor);
+//			backgroundTask.setName("background_consume:" + execution.taskId());
+			trackBackgroundTask(backgroundTask);
+//			executor.submit(backgroundTask);
+			backgroundTask.join();
+		} finally {
+			CompletableFuture<Void> cleanupTask = cleanupProducer(execution.taskId(), producerTask);
+//			cleanupTask.setName("cleanup_producer:" + execution.taskId());
 			trackBackgroundTask(cleanupTask);
-			executor.submit(cleanupTask);
+			cleanupTask.join();
 		}
+		
+		return results;
 	}
 	
 	private void validateTaskIdMatch(final String taskId, final String eventTaskId) {
@@ -309,27 +306,17 @@ public class DefaultRequestHandler implements RequestHandler {
 	 * @param queue The event queue for the agent to publish to.
 	 * @return
 	 */
-	private void runEventStream(final RequestContext request, final EventQueue queue) {
-//		return CompletableFuture.runAsync(() -> {
-//			agentExecutor.execute(request, queue);
-//		}, executor).whenComplete((__, throwable) -> {
-//			try {
-//				queue.close();
-//			} catch (InterruptedException e) {
-//				// TODO Auto-generated catch block
-//				Thread.currentThread().interrupt();
-//			}
-//		});
-		try {
+	private CompletableFuture<Void> runEventStream(final RequestContext request, final EventQueue queue) {
+		return CompletableFuture.runAsync(() -> {
 			agentExecutor.execute(request, queue);
-		} finally {
+		}, executor).whenComplete((_, _) -> {
 			try {
 				queue.close();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				Thread.currentThread().interrupt();
 			}
-		}
+		});
 	}
 	
 	private MessageExecution setupMessageExecution(MessageSendParams params, ServerCallContext context) {
@@ -359,10 +346,7 @@ public class DefaultRequestHandler implements RequestHandler {
 		
 		EventQueue queue = queueManager.createOrTap(taskId);
 		ResultAggregator resultAggregator = new ResultAggregator(taskManager);
-		FutureTaskWithDoneCallbacks<Void> producerTask = new FutureTaskWithDoneCallbacks<>(() -> {
-			runEventStream(requestContext, queue);
-			return null;
-		});
+		CompletableFuture<Void> producerTask = runEventStream(requestContext, queue);
 		
 		registerProducer(taskId, producerTask);
 		
@@ -375,7 +359,7 @@ public class DefaultRequestHandler implements RequestHandler {
 	 * @param taskId
 	 * @param producerTask
 	 */
-	private void registerProducer(final String taskId, final FutureTask<Void> producerTask) {
+	private void registerProducer(final String taskId, final CompletableFuture<Void> producerTask) {
 		runningAgents.put(taskId, producerTask);
 	}
 	
@@ -385,9 +369,14 @@ public class DefaultRequestHandler implements RequestHandler {
 	 * @param taskId
 	 * @param producerTask
 	 */
-	private CompletableFuture<Void> cleanupProducer(final String taskId, final FutureTask<Void> producerTask) {
+	private CompletableFuture<Void> cleanupProducer(final String taskId, final CompletableFuture<Void> producerTask) {
 		
-		return CompletableFuture.runAsync(producerTask, executor).whenComplete((_, _) -> { 
+		return producerTask.exceptionally(exception -> {
+			if (exception instanceof CancellationException) {
+				LOGGER.fine(String.format("Producer task %s was cancelled during cleanup.", taskId));
+			}
+			return null;
+		}).whenComplete((_, _) -> { 
 			queueManager.close(taskId);
 			runningAgents.remove(taskId);
 		});
@@ -400,23 +389,17 @@ public class DefaultRequestHandler implements RequestHandler {
      * ensuring any exceptions are surfaced in logs.
 	 * @param task
 	 */
-	private void trackBackgroundTask(final FutureTaskWithDoneCallbacks<Void> task) {
+	private void trackBackgroundTask(final CompletableFuture<Void> task) {
 		backgroundTasks.add(task);
-		task.addDoneCallback(_task -> {
-			try {
-				if (_task.isDone()) {
-					_task.resultNow();
-				}
-			} catch (Throwable throwable) {
-				String name = ((FutureTaskWithDoneCallbacks<?>)_task).getName();
-				if (throwable instanceof CancellationException || _task.isCancelled()) {
-					LOGGER.fine(String.format("Background task %s cancelled.", name));
-				} else {
-					LOGGER.severe(String.format("Background task %s failed.", name));
-				}
-			} finally {
-				backgroundTasks.remove(_task);
+		task.whenComplete((_, exception) -> {
+			var cancelled = (exception != null && exception instanceof CancellationException) || task.isCancelled();
+			if (cancelled) {
+				LOGGER.fine("Background task cancelled.");
+			} else if (exception != null) {
+				LOGGER.log(Level.SEVERE, "Background task failed.", exception);
 			}
+			
+			backgroundTasks.remove(task);
 		});
 	}
 
@@ -548,49 +531,5 @@ public class DefaultRequestHandler implements RequestHandler {
 		pushConfigStore.deleteInfo(params.id(), params.pushNotificationConfigId());
 	}
 	
-	private final record MessageExecution(TaskManager taskManager, String taskId, EventQueue queue, ResultAggregator resultAggregator, FutureTaskWithDoneCallbacks<Void> producerTask) {}
-	
-	class FutureTaskWithDoneCallbacks<V> extends FutureTask<V> {
-		
-		private final List<Consumer<FutureTask<V>>> doneCallbacks = new CopyOnWriteArrayList<>();
-		private String name = this.getClass().getName() + "_" + System.currentTimeMillis();
-
-		/**
-		 * @param callable
-		 */
-		public FutureTaskWithDoneCallbacks(Callable<V> callable) {
-			super(callable);
-			// TODO Auto-generated constructor stub
-		}
-		
-		public void addDoneCallback(Consumer<FutureTask<V>> callback) {
-			if (callback != null) doneCallbacks.add(callback);
-		}
-		
-		public void removeDoneCallback(Consumer<FutureTask<V>> callback) {
-			if (callback != null) doneCallbacks.remove(callback);
-		}
-
-		/**
-		 * @return the name
-		 */
-		public String getName() {
-			return name;
-		}
-
-		/**
-		 * @param name the name to set
-		 */
-		public void setName(String name) {
-			this.name = name;
-		}
-
-		@Override
-		protected void done() {
-			// TODO Auto-generated method stub
-			for (Consumer<FutureTask<V>> callback : doneCallbacks) {
-				callback.accept(this);
-			}
-		}
-	}
+	private final record MessageExecution(TaskManager taskManager, String taskId, EventQueue queue, ResultAggregator resultAggregator, CompletableFuture<Void> producerTask) {}
 }
