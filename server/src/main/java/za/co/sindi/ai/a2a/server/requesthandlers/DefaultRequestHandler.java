@@ -206,9 +206,9 @@ public class DefaultRequestHandler implements RequestHandler {
 		
 		EventInterrupt eventInterrupt = null;
 		try {
-			producerTask.get();
 			Runnable pushNotificationCallback = () -> sendPushNotificationIfNeeded(execution.taskId(), execution.resultAggregator());
 			eventInterrupt = execution.resultAggregator().consumeAndBreakOnInterrupt(consumer, blocking, pushNotificationCallback);
+			producerTask.get();
 		} catch (Exception e) {
 			LOGGER.log(Level.SEVERE, "Agent Execution failed.");
 			producerTask.cancel(true);
@@ -252,8 +252,6 @@ public class DefaultRequestHandler implements RequestHandler {
 		
 		Publisher<Event> results = null;
 		try {
-			producerTask.join();
-			
 			results = execution.resultAggregator().consumeAndEmit(consumer);
 			results = new TransformingPublisher<Event, Event>(results, (event) -> {
 				if (event instanceof Task task) validateTaskIdMatch(execution.taskId(), task.getId());
@@ -262,6 +260,8 @@ public class DefaultRequestHandler implements RequestHandler {
 				
 				return event;
 			});
+			
+			producerTask.join();
 		} catch(CancellationException e) {
 			CompletableFuture<Void> backgroundTask = CompletableFuture.runAsync(() -> {
 				execution.resultAggregator.consumeAll(consumer);
