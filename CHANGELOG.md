@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 
 
+
+## [0.0.3] - 2026-06-10
+- Merge branch 'main' of https://github.com/sinditech/sindi-ai-a2a
+
+
 ## [0.0.3] - 2026-06-10
 - Merge branch 'main' of https://github.com/sinditech/sindi-ai-a2a
 
